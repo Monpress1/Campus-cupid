@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Campus Cupid ❤️ - Profile</title>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/compressorjs/dist/compressor.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+/* Base Styles & Utilities */
+body {
+  margin: 0;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: linear-gradient(135deg, #0f172a, #1e293b, #334155);
+  color: #fff;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+}
+.container { width: 100%; max-width: 600px; }
+.navbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; width: 100%; position: relative; }
+.navbar i { font-size: 1.5rem; cursor: pointer; }
+.menu-content { 
+  display: none; 
+  position: absolute; 
+  right: 0; 
+  top: 30px; 
+  background: rgba(30,41,59,0.95); 
+  border-radius: 0.5rem; 
+  min-width: 150px; 
+  padding: 0.5rem; 
+  z-index: 100;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  animation: fadeIn 0.3s ease-in-out;
+}
+.menu-content a, .menu-content button { 
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  width: 100%; 
+  padding: 0.7rem; 
+  background: none; 
+  border: none; 
+  color: #fff; 
+  text-align: left; 
+  cursor: pointer; 
+  border-radius: 0.4rem; 
+  text-decoration: none;
+}
+.menu-content a:hover, .menu-content button:hover { background: rgba(255,255,255,0.1); }
+.menu-item-with-badge { position: relative; }
+.badge {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: red;
+  color: #fff;
+  border-radius: 50%;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.7rem;
+  min-width: 20px;
+  text-align: center;
+  border: 1px solid #0f172a;
+  pointer-events: none;
+  display: none;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Loading Overlay */
+#loadingOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(15, 23, 42, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  transition: opacity 0.5s ease;
+}
+#loadingOverlay i {
+  font-size: 3rem;
+  color: #fbbf24;
+}
+
+/* Custom Message Box */
+#messageBox {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #fbbf24;
+    color: #1e293b;
+    padding: 1rem 1.5rem;
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    z-index: 10000;
+    display: none;
+    align-items: center;
+    gap: 1rem;
+    opacity: 0;
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+#messageBox.show {
+    display: flex;
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+#messageBox i.icon {
+    font-size: 1.5rem;
+}
+#messageBox p {
+    margin: 0;
+    font-weight: 500;
+}
+
+/* Profile Header & Stats */
+.profile-header { display: flex; flex-direction: column; align-items: center; margin-bottom: 1.5rem; position: relative; }
+.profile-pic-container { position: relative; margin-bottom: 1rem; }
+.profile-pic { width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 4px solid #fbbf24; transition: transform 0.3s ease; }
+.profile-pic:hover { transform: scale(1.05); }
+.user-icon {
+  width: 150px;
+  height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4rem;
+  color: #fff;
+  border-radius: 50%;
+  background: #475569;
+  border: 4px solid #fbbf24;
+}
+#uploadLabel {
+  position: absolute;
+  bottom: 0px;
+  right: 5px;
+  background: #fbbf24;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.2rem;
+  color: #0f172a;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  transition: background 0.3s ease;
+  z-index: 2;
+}
+#uploadLabel:hover { background: #f59e0b; }
+#profileUpload { display: none; }
+#uploadStatus {
+  position:absolute;
+  bottom: -25px;
+  font-size: 0.8rem;
+  color: #94a3b8;
+  width: 100%;
+  text-align: center;
+}
+.profile-header h1 { font-size: 2rem; margin: 0; color: #fff; text-align: center; word-break: break-word; }
+.profile-header p { color: #bbb; margin: 0.3rem 0; font-size: 0.9rem; text-align: right; }
+.profile-stats { display: flex; justify-content: space-around; width: 100%; margin-bottom: 1.5rem; }
+.profile-stats .stat { background: rgba(255,255,255,0.08); backdrop-filter: blur(10px); border-radius: 0.75rem; padding: 0.6rem 0.8rem; text-align: center; flex: 1; margin: 0 0.3rem; }
+.profile-stats .stat p { margin: 0; font-weight: bold; font-size: 1.2rem; color: #fbbf24; }
+.profile-stats .stat span { display: block; font-size: 0.85rem; color: #94a3b8; }
+.profile-stats .stat.clickable { cursor: pointer; }
+
+/* View & Edit Sections */
+.view-profile, .edit-profile { display: flex; flex-direction: column; gap: 1rem; padding: 0.5rem; }
+.profile-card { display: flex; justify-content: space-between; background: rgba(255,255,255,0.08); backdrop-filter: blur(10px); padding: 1rem; border-radius: 0.75rem; }
+.profile-card span { font-size: 0.9rem; color: #94a3b8; }
+.profile-card p {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  text-align: right;
+}
+.profile-card p i { color: #fbbf24; font-size: 1rem; }
+/* Override for bio to make it left-aligned */
+#view-bio { 
+    white-space: pre-wrap; 
+    text-align: left; 
+    max-height: 150px; 
+    overflow-y: auto; 
+    width: 100%; /* Important to make bio span the full width */
+}
+#view-bio + span { /* Fix the span next to the bio for alignment */
+    display: none;
+}
+.interests-container { display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 0; justify-content: flex-end; }
+.interest-tag {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  padding: 0.4rem 0.8rem;
+  border-radius: 1.5rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.interest-tag i { color: #fbbf24; }
+#edit-profile { display: none; flex-direction: column; gap: 1rem; padding: 0.5rem; }
+.profile-info { display: flex; flex-direction: column; gap: 0.8rem; width: 100%; }
+.profile-info input, .profile-info select, .profile-info textarea { width: 100%; padding: 0.6rem; border-radius: 0.5rem; border: 1px solid #475569; font-size: 1rem; background: #1e293b; color: #fff; }
+.profile-info textarea { resize: vertical; }
+button#saveBtn, button#cancelBtn { margin-top: 0.5rem; width: 100%; border: none; padding: 0.7rem; font-weight: bold; cursor: pointer; border-radius: 0.5rem; font-size: 1rem; }
+button#saveBtn { background: #fbbf24; }
+button#saveBtn:hover { background: #f59e0b; }
+button#cancelBtn { background: #475569; margin-top: 0.5rem; }
+button#cancelBtn:hover { background: #334155; }
+
+/* NEW: User Not Found Message */
+#notFoundMessage {
+    display: none;
+    text-align: center;
+    color: #ef4444;
+    font-size: 1.2rem;
+    margin-top: 5rem;
+}
+
+/* NEW: Friend & Chat Buttons */
+#addFriendBtn, #unfriendBtn {
+    border: none;
+    padding: 0.7rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    flex: 1;
+    display: none; /* Managed by JS */
+    font-weight: bold;
+    font-size: 1rem;
+    transition: background 0.3s;
+}
+#addFriendBtn {
+    background: #fbbf24;
+    color: #1e293b;
+}
+#addFriendBtn:disabled {
+    background: #475569;
+    color: #94a3b8;
+    cursor: default;
+}
+#addFriendBtn:hover:not(:disabled) { background: #f59e0b; }
+
+#unfriendBtn {
+    background: #ef4444;
+    color: #fff;
+}
+#unfriendBtn:hover { background: #dc2626; }
+
+/* NEW: Floating Chat Button */
+#floatingChatBtn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #475569;
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    font-size: 1.5rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    display: none; /* Managed by JS */
+    z-index: 100;
+    transition: background 0.3s;
+    display: flex; /* Ensure flex for centering icon */
+    align-items: center;
+    justify-content: center;
+}
+#floatingChatBtn:hover { background: #334155; }
+
+/* NEW: Friends List Modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
+    justify-content: center;
+    align-items: center;
+}
+.modal-content {
+    background-color: #1e293b;
+    margin: auto;
+    padding: 1.5rem;
+    border-radius: 0.75rem;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    animation: slideIn 0.3s ease-out;
+    position: relative;
+    max-height: 80%;
+    display: flex;
+    flex-direction: column;
+}
+@keyframes slideIn {
+    from { transform: translateY(-50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+.close-btn {
+    color: #fff;
+    font-size: 1.5rem;
+    font-weight: bold;
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    cursor: pointer;
+}
+.close-btn:hover { color: #fbbf24; }
+.modal-content h3 { margin-top: 0; border-bottom: 2px solid #334155; padding-bottom: 1rem; }
+.friends-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+    flex-grow: 1;
+}
+.friend-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+.friend-item img {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #fbbf24;
+}
+.friend-item .user-icon {
+    width: 45px;
+    height: 45px;
+    font-size: 1.5rem;
+    border: 2px solid #fbbf24;
+}
+.friend-info { flex-grow: 1; }
+.friend-info h4 { margin: 0; font-size: 1rem; }
+.friend-info p { margin: 0; font-size: 0.8rem; color: #94a3b8; }
+.friend-item button {
+    background: #fbbf24;
+    color: #1e293b;
+    border: none;
+    padding: 0.5rem 0.8rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.3s;
+    font-size: 0.9rem;
+}
+.friend-item button.unfriend-btn { background: #ef4444; color: #fff; }
+.friend-item button:hover { opacity: 0.8; }
+</style>
+</head>
+<body>
+<div id="loadingOverlay">
+  <i class="fa-solid fa-circle-notch fa-spin"></i>
+</div>
+
+<div id="messageBox">
+  <i class="fa-solid fa-heart-circle-bolt icon"></i>
+  <p id="messageText"></p>
+</div>
+
+<div class="container">
+  <div class="navbar">
+    <i class="fa-solid fa-heart-circle-bolt" style="color:#ef4444;"></i>
+    <div class="menu">
+      <i class="fa-solid fa-bars" id="menuBtn"></i>
+      <div class="menu-content" id="menuContent">
+        <a href="feed.html"><i class="fa-solid fa-house"></i> Feed</a>
+        <a href="chat.html"><i class="fa-solid fa-comments"></i> Chat</a>
+        <a href="notifications.html" class="menu-item-with-badge">
+          <i class="fa-solid fa-bell"></i> Notifications
+          <span class="badge" id="notificationBadge">0</span>
+        </a>
+        <button id="editProfileMenuBtn" style="display:none;"><i class="fa-solid fa-user-edit"></i> Edit Profile</button>
+        <button id="logoutBtn"><i class="fa-solid fa-sign-out-alt"></i> Logout</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="profile-header">
+    <div class="profile-pic-container">
+      <div id="profileImageContainer">
+        <div class="user-icon"><i class="fa-solid fa-user"></i></div>
+      </div>
+      <label for="profileUpload" id="uploadLabel" style="display:none;"><i class="fa-solid fa-plus"></i></label>
+      <input type="file" id="profileUpload" accept="image/*">
+      <div id="uploadStatus"></div>
+    </div>
+    <h1 id="view-fullName-header"></h1>
+    <p id="view-email-header"></p>
+  </div>
+
+  <div id="profile-stats" class="profile-stats">
+    <div class="stat clickable" id="friends-stat"><p id="friends-count"></p><span>Friends</span></div>
+    <div class="stat"><p id="posts-count"></p><span>Posts</span></div>
+    <div class="stat"><p id="likes-count"></p><span>Likes</span></div>
+  </div>
+
+  <div id="view-profile" class="view-profile">
+    <div class="profile-card"><span>Gender</span><p id="view-gender"></p></div>
+    <div class="profile-card"><span>Age</span><p id="view-age"></p></div>
+    <div class="profile-card"><span></span><p id="view-bio"></p></div>
+    <div class="profile-card"><span>Interests</span><div class="interests-container" id="view-interests"></div></div>
+    
+    <div style="display: flex; gap: 1rem;">
+        <button id="loveBtn" style="background:#ef4444; color:#fff; border:none; padding:0.7rem; border-radius:0.5rem; cursor:pointer; flex: 1;">
+            <i class="fa-solid fa-heart"></i> Love
+        </button>
+        <button id="addFriendBtn">
+            <i class="fa-solid fa-user-plus"></i> Add Friend
+        </button>
+        <button id="unfriendBtn">
+            <i class="fa-solid fa-user-minus"></i> Unfriend
+        </button>
+    </div>
+  </div>
+
+  <div id="edit-profile">
+    <div class="profile-info">
+      <input type="text" id="fullName" placeholder="Full Name">
+      <div style="display:flex; gap:0.5rem;">
+        <select id="gender"><option value="">Gender</option><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option></select>
+        <select id="age"><option value="">Age</option></select>
+      </div>
+      <select id="interests" multiple>
+        <option value="coding">Coding</option>
+        <option value="reading">Reading</option>
+        <option value="sports">Sports</option>
+        <option value="movies">Movies</option>
+        <option value="music">Music</option>
+        <option value="travel">Travel</option>
+        <option value="gaming">Gaming</option>
+      </select>
+      <textarea id="bio" rows="3" placeholder=""></textarea>
+      <button id="saveBtn">Save Profile</button>
+      <button id="cancelBtn">Cancel</button>
+    </div>
+  </div>
+
+  <div id="notFoundMessage">
+    <h2>User Not Found</h2>
+    <p>The profile you are looking for does not exist or has been removed.</p>
+  </div>
+
+</div>
+
+<div id="imageModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:9999; justify-content:center; align-items:center;">
+  <img id="modalImage" style="max-width:90%; max-height:90%; object-fit:contain;">
+  <span id="closeModal" style="position:absolute; top:20px; right:30px; color:#fff; font-size:2rem; cursor:pointer;">&times;</span>
+</div>
+
+<div id="friendsListModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" id="closeFriendsModal">&times;</span>
+        <h3>Friends List</h3>
+        <div id="friendsList" class="friends-list">
+            <div class="placeholder-notification"></div>
+            <div class="placeholder-notification" style="width: 90%;"></div>
+        </div>
+    </div>
+</div>
+
+<button id="floatingChatBtn"><i class="fa-solid fa-comments"></i></button>
+
+<script>
+const SUPABASE_URL = "https://vfbjwkfurleatfdrabdg.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmYmp3a2Z1cmxlYXRmZHJhYmRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MjAwNDIsImV4cCI6MjA3Mjk5NjA0Mn0.hguIfyynGc19tsSm9u66qy5IeUv40_mE8-JBjqnOQBE";
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const loadingOverlay = document.getElementById("loadingOverlay");
+const viewProfile = document.getElementById("view-profile");
+const editProfile = document.getElementById("edit-profile");
+const uploadLabel = document.getElementById("uploadLabel");
+const profileImageContainer = document.getElementById("profileImageContainer");
+const profileUploadEl = document.getElementById("profileUpload");
+const uploadStatusEl = document.getElementById("uploadStatus");
+const notFoundMessage = document.getElementById("notFoundMessage");
+const messageBox = document.getElementById("messageBox");
+const messageText = document.getElementById("messageText");
+
+const fullNameEl = document.getElementById("fullName");
+const genderEl = document.getElementById("gender");
+const ageEl = document.getElementById("age");
+const bioEl = document.getElementById("bio");
+const interestsEl = document.getElementById("interests");
+
+const viewFullNameEl = document.getElementById("view-fullName-header");
+const viewEmailEl = document.getElementById("view-email-header");
+const viewGenderEl = document.getElementById("view-gender");
+const viewAgeEl = document.getElementById("view-age");
+const viewBioEl = document.getElementById("view-bio");
+const viewInterestsEl = document.getElementById("view-interests");
+const likesCountEl = document.getElementById("likes-count");
+const notificationBadge = document.getElementById("notificationBadge");
+const friendsCountEl = document.getElementById("friends-count");
+
+const imageModal = document.getElementById("imageModal");
+const modalImage = document.getElementById("modalImage");
+const closeModal = document.getElementById("closeModal");
+
+const loveBtn = document.getElementById("loveBtn");
+const addFriendBtn = document.getElementById("addFriendBtn");
+const unfriendBtn = document.getElementById("unfriendBtn");
+const floatingChatBtn = document.getElementById("floatingChatBtn");
+
+const friendsStat = document.getElementById("friends-stat");
+const friendsListModal = document.getElementById("friendsListModal");
+const friendsListContainer = document.getElementById("friendsList");
+const closeFriendsModalBtn = document.getElementById("closeFriendsModal");
+
+const interestIcons = {
+  "coding": "fa-solid fa-code",
+  "reading": "fa-solid fa-book",
+  "sports": "fa-solid fa-futbol",
+  "movies": "fa-solid fa-film",
+  "music": "fa-solid fa-music",
+  "travel": "fa-solid fa-plane",
+  "gaming": "fa-solid fa-gamepad"
+};
+
+let profileIdToLoad;
+let currentUserId;
+
+// Function to show custom message box
+function showMessage(message) {
+  messageText.textContent = message;
+  messageBox.classList.add('show');
+  setTimeout(() => {
+    messageBox.classList.remove('show');
+  }, 3000);
+}
+
+// Menu toggle
+document.getElementById("menuBtn").addEventListener("click", (e) => {
+  e.stopPropagation();
+  const menu = document.getElementById("menuContent");
+  menu.style.display = menu.style.display === "block" ? "none" : "block";
+});
+
+// Close menu when clicking outside
+window.addEventListener("click", (e) => {
+  const menu = document.getElementById("menuContent");
+  const menuBtn = document.getElementById("menuBtn");
+  if (menu.style.display === "block" && !menu.contains(e.target) && e.target !== menuBtn) {
+    menu.style.display = "none";
+  }
+});  
+
+// Edit Profile toggle
+document.getElementById("editProfileMenuBtn").addEventListener("click", () => {
+  toggleEditView(true);
+});
+
+document.getElementById("cancelBtn").addEventListener("click", () => {
+  toggleEditView(false);
+  loadProfile();
+});
+
+// Logout
+document.getElementById("logoutBtn").addEventListener("click", async () => {
+  await supabase.auth.signOut();
+  window.location.href = "index.html";
+});
+
+// Fill age select
+for (let i = 16; i <= 60; i++) {
+  const opt = document.createElement("option");
+  opt.value = i;
+  opt.textContent = i;
+  ageEl.appendChild(opt);
+}
+
+// Toggle view/edit mode
+function toggleEditView(isEditing) {
+  if (isEditing) {
+    viewProfile.style.display = "none";
+    editProfile.style.display = "flex";
+    uploadLabel.style.display = "flex";
+  } else {
+    viewProfile.style.display = "flex";
+    editProfile.style.display = "none";
+    uploadLabel.style.display = "none";
+  }
+}
+
+// Function to fetch and display unread notifications count
+async function fetchNotifications() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { count, error } = await supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('recipient_id', user.id)
+        .eq('read_status', false);
+
+    if (error) {
+        console.error("Error fetching notifications:", error.message);
+        return;
+    }
+
+    if (count > 0) {
+        notificationBadge.textContent = count;
+        notificationBadge.style.display = 'block';
+    } else {
+        notificationBadge.style.display = 'none';
+    }
+}
+
+// Load and display profile data
+async function loadProfile() {
+  loadingOverlay.style.opacity = 1;
+  loadingOverlay.style.display = "flex";
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) { window.location.href = "index.html"; return; }
+  currentUserId = user.id;
+
+  const urlParams = new URLSearchParams(window.location.search);
+  profileIdToLoad = urlParams.get('id') || user.id;
+
+  const editProfileMenuBtn = document.getElementById("editProfileMenuBtn");
+  if (profileIdToLoad === user.id) {
+    editProfileMenuBtn.style.display = 'block';
+    addFriendBtn.style.display = 'none';
+    unfriendBtn.style.display = 'none';
+    loveBtn.style.display = 'none';
+    floatingChatBtn.style.display = 'none';
+  } else {
+    editProfileMenuBtn.style.display = 'none';
+    loveBtn.style.display = 'block';
+  }
+
+  fetchNotifications();
+
+  let { data: profileData, error: profileError } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("user_id", profileIdToLoad)
+    .single();
+
+  if (profileError) {
+    loadingOverlay.style.opacity = 0;
+    setTimeout(() => { loadingOverlay.style.display = "none"; }, 500);
+
+    if (profileError.code === "PGRST116") {
+      document.querySelector('.profile-header').style.display = 'none';
+      document.querySelector('.profile-stats').style.display = 'none';
+      viewProfile.style.display = 'none';
+      editProfile.style.display = 'none';
+      notFoundMessage.style.display = 'block';
+      return;
+    } else {
+      console.error("Error fetching profile:", profileError.message);
+      return;
+    }
+  }
+
+  viewFullNameEl.textContent = profileData.full_name || "New User";
+  if (profileIdToLoad === user.id) {
+    viewEmailEl.textContent = user.email || "No email available";
+  } else {
+    viewEmailEl.textContent = "";
+  }
+
+  const { count: postsCount } = await supabase
+    .from('posts')
+    .select('*', { count: 'exact', head: true })
+    .eq('author_id', profileIdToLoad);
+  document.getElementById("posts-count").textContent = postsCount || 0;
+  
+  // Update friends count based on accepted requests
+  const { count: friendsCount } = await supabase
+    .from('friend_requests')
+    .select('*', { count: 'exact', head: true })
+    .or(`sender_id.eq.${profileIdToLoad},receiver_id.eq.${profileIdToLoad}`)
+    .eq('status', 'accepted');
+  friendsCountEl.textContent = friendsCount || 0;
+
+
+  const { count: likesCount } = await supabase
+    .from('profile_likes')
+    .select('*', { count: 'exact', head: true })
+    .eq('liked_profile_id', profileIdToLoad);
+  likesCountEl.textContent = likesCount || 0;
+  
+  viewGenderEl.innerHTML = profileData.gender ? `<i class="fa-solid fa-${profileData.gender === 'male' ? 'mars' : profileData.gender === 'female' ? 'venus' : 'genderless'}"></i> ${profileData.gender.charAt(0).toUpperCase() + profileData.gender.slice(1)}` : "N/A";
+  viewAgeEl.innerHTML = profileData.age ? `<i class="fa-solid fa-cake-candles"></i> ${profileData.age}` : "N/A";
+  viewBioEl.textContent = profileData.bio || "No bio yet.";
+
+  viewInterestsEl.innerHTML = "";
+  if (profileData.interests?.length) {
+    profileData.interests.forEach(i => {
+      const span = document.createElement("span");
+      span.className = "interest-tag";
+      span.innerHTML = `<i class="${interestIcons[i] || 'fa-solid fa-tag'}"></i> ${i}`;
+      viewInterestsEl.appendChild(span);
+    });
+  } else {
+    viewInterestsEl.textContent = "No interests added.";
+  }
+
+  fullNameEl.value = profileData.full_name || "";
+  genderEl.value = profileData.gender || "";
+  ageEl.value = profileData.age || "";
+  bioEl.value = profileData.bio || "";
+  if (profileData.interests) {
+    for (let opt of interestsEl.options) opt.selected = profileData.interests.includes(opt.value);
+  }
+
+  profileImageContainer.innerHTML = '';
+  if (profileData.avatar_url) {
+    const imgEl = document.createElement("img");
+    imgEl.id = "profileImage";
+    imgEl.className = "profile-pic";
+    imgEl.src = profileData.avatar_url;
+    imgEl.alt = "Profile Picture";
+    
+    imgEl.onload = () => {
+        profileImageContainer.appendChild(imgEl);
+    };
+    imgEl.onerror = () => {
+        profileImageContainer.innerHTML = `<div class="user-icon"><i class="fa-solid fa-user"></i></div>`;
+    };
+    
+    imgEl.style.cursor = "pointer";
+    imgEl.addEventListener("click", () => {
+      modalImage.src = imgEl.src;
+      imageModal.style.display = "flex";
+    });
+  } else {
+    profileImageContainer.innerHTML = `<div class="user-icon"><i class="fa-solid fa-user"></i></div>`;
+  }
+
+  // Check friendship status and update button
+  await updateFriendButton(profileIdToLoad, user.id);
+
+  loadingOverlay.style.opacity = 0;
+  setTimeout(() => { loadingOverlay.style.display = "none"; }, 500);
+}
+
+// NEW: Refactored friend button logic
+async function updateFriendButton(profileIdToLoad, currentUserId) {
+    if (profileIdToLoad === currentUserId) return;
+
+    let { data: request, error } = await supabase
+        .from('friend_requests')
+        .select('*')
+        .or(`sender_id.eq.${currentUserId},receiver_id.eq.${profileIdToLoad}`)
+        .or(`sender_id.eq.${profileIdToLoad},receiver_id.eq.${currentUserId}`)
+        .limit(1)
+        .single();
+    
+    if (error && error.code !== "PGRST116") {
+        console.error("Error checking friend status:", error.message);
+        return;
+    }
+
+    if (request) {
+        if (request.status === 'accepted') {
+            addFriendBtn.style.display = 'none';
+            unfriendBtn.style.display = 'flex';
+            floatingChatBtn.style.display = 'flex';
+        } else if (request.sender_id === currentUserId) {
+            addFriendBtn.textContent = 'Request Sent';
+            addFriendBtn.disabled = true;
+            addFriendBtn.style.backgroundColor = '#475569';
+            addFriendBtn.style.cursor = 'default';
+            addFriendBtn.style.display = 'flex';
+            unfriendBtn.style.display = 'none';
+            floatingChatBtn.style.display = 'none';
+        } else { // status is pending and they sent it to you
+            addFriendBtn.textContent = 'Accept Request';
+            addFriendBtn.disabled = false;
+            addFriendBtn.style.backgroundColor = '#fbbf24';
+            addFriendBtn.style.cursor = 'pointer';
+            addFriendBtn.style.display = 'flex';
+            unfriendBtn.style.display = 'none';
+            floatingChatBtn.style.display = 'none';
+        }
+    } else {
+        addFriendBtn.textContent = 'Add Friend';
+        addFriendBtn.disabled = false;
+        addFriendBtn.style.backgroundColor = '#fbbf24';
+        addFriendBtn.style.cursor = 'pointer';
+        addFriendBtn.style.display = 'flex';
+        unfriendBtn.style.display = 'none';
+        floatingChatBtn.style.display = 'none';
+    }
+}
+
+
+document.getElementById("saveBtn").addEventListener("click", async () => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) { return showMessage("No user found."); }
+
+  const selectedInterests = Array.from(interestsEl.options)
+    .filter(option => option.selected)
+    .map(option => option.value);
+
+  const updates = {
+    full_name: fullNameEl.value,
+    gender: genderEl.value,
+    age: ageEl.value,
+    bio: bioEl.value,
+    interests: selectedInterests
+  };
+
+  const { error } = await supabase.from("profiles").update(updates).eq("user_id", user.id);
+  if (error) {
+    showMessage("Save failed: " + error.message);
+  } else {
+    showMessage("Profile updated successfully!");
+    loadProfile();
+    toggleEditView(false); // Add this line to revert to view mode
+  }
+});
+
+profileUploadEl.addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  uploadStatusEl.textContent = "Uploading image...";
+  uploadLabel.style.display = "none";
+
+  new Compressor(file, {
+    quality: 0.6,
+    maxWidth: 800,
+    maxHeight: 800,
+    success: async (compressedFile) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        uploadStatusEl.textContent = "Please log in to upload an image.";
+        uploadLabel.style.display = "flex";
+        return;
+      }
+      
+      const fileExt = compressedFile.name.split(".").pop();
+      const fileName = `${user.id}.${fileExt}`;
+      const filePath = `${user.id}/${fileName}`;
+    
+      const { error: uploadError } = await supabase.storage.from("avatars").upload(filePath, compressedFile, { upsert: true });
+
+      if (uploadError) {
+        uploadStatusEl.textContent = "Image upload failed: " + uploadError.message;
+      } else {
+        const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(filePath);
+        
+        const newPublicUrl = `${publicUrl}?t=${new Date().getTime()}`;
+
+        const { error: updateErr } = await supabase.from("profiles").update({ avatar_url: newPublicUrl }).eq("user_id", user.id);
+        
+        if (updateErr) {
+          uploadStatusEl.textContent = "Failed to save avatar: " + updateErr.message;
+        } else {
+          profileImageContainer.innerHTML = `<img id="profileImage" class="profile-pic" src="${newPublicUrl}" alt="Profile Picture">`;
+          
+          const newImgEl = profileImageContainer.querySelector("#profileImage");
+          newImgEl.style.cursor = "pointer";
+          newImgEl.addEventListener("click", () => {
+              modalImage.src = newPublicUrl;
+              imageModal.style.display = "flex";
+          });
+
+          uploadStatusEl.textContent = "Profile picture updated!";
+          setTimeout(() => { uploadStatusEl.textContent = ""; }, 3000);
+        }
+      }
+      uploadLabel.style.display = "flex";
+    },
+    error: (err) => {
+      uploadStatusEl.textContent = "Image compression failed: " + err.message;
+      uploadLabel.style.display = "flex";
+    },
+  });
+});
+
+closeModal.addEventListener("click", () => {
+  imageModal.style.display = "none";
+});
+
+loveBtn.addEventListener("click", async () => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return showMessage("Please log in to love a profile.");
+  }
+  
+  const urlParams = new URLSearchParams(window.location.search);
+  const likedProfileId = urlParams.get('id');
+
+  if (!likedProfileId) {
+    return showMessage("Cannot love this profile. A user ID is missing.");
+  }
+
+  const { error } = await supabase
+    .from('profile_likes')
+    .insert([
+      { liker_id: user.id, liked_profile_id: likedProfileId }
+    ]);
+
+  if (error) {
+    if (error.code === '23505') {
+      showMessage("You already loved this profile.");
+    } else {
+      showMessage("Failed to love profile: " + error.message);
+    }
+  } else {
+    showMessage("Profile loved successfully!");
+    loadProfile();
+  }
+});
+
+
+addFriendBtn.addEventListener("click", async () => {
+    await handleFriendAction(profileIdToLoad, 'add');
+});
+
+unfriendBtn.addEventListener("click", async () => {
+    await handleFriendAction(profileIdToLoad, 'unfriend');
+});
+
+floatingChatBtn.addEventListener("click", () => {
+    window.location.href = `chat.html?user_id=${profileIdToLoad}`;
+});
+
+// NEW: Friends count click handler
+friendsStat.addEventListener("click", async () => {
+    friendsListModal.style.display = "flex";
+    await fetchAndDisplayFriends(profileIdToLoad);
+});
+
+// NEW: Close modal button
+closeFriendsModalBtn.addEventListener("click", () => {
+    friendsListModal.style.display = "none";
+});
+
+// NEW: Fetch and display friends
+async function fetchAndDisplayFriends(profileId) {
+    friendsListContainer.innerHTML = `<div class="placeholder-notification"></div><div class="placeholder-notification" style="width: 90%;"></div>`;
+
+    const { data: friendshipData, error: friendshipError } = await supabase
+        .from('friend_requests')
+        .select(`
+            sender_id,
+            receiver_id,
+            status
+        `)
+        .or(`sender_id.eq.${profileId},receiver_id.eq.${profileId}`)
+        .eq('status', 'accepted');
+
+    if (friendshipError) {
+        console.error("Error fetching friendships:", friendshipError.message);
+        friendsListContainer.innerHTML = "<p>Error loading friends.</p>";
+        return;
+    }
+
+    const friendIds = new Set();
+    friendshipData.forEach(friendship => {
+        if (friendship.sender_id === profileId) {
+            friendIds.add(friendship.receiver_id);
+        } else {
+            friendIds.add(friendship.sender_id);
+        }
+    });
+
+    const friendProfiles = await fetchProfiles(Array.from(friendIds));
+
+    // Get the current user's friends to check friendship status
+    const currentUsersFriends = await fetchCurrentUsersFriends(currentUserId);
+
+    friendsListContainer.innerHTML = "";
+    if (friendProfiles.length === 0) {
+        friendsListContainer.innerHTML = "<p>No friends to show.</p>";
+    } else {
+        friendProfiles.forEach(profile => {
+            const isFriend = currentUsersFriends.has(profile.user_id);
+            const isSelf = profile.user_id === currentUserId;
+            
+            let buttonHtml = '';
+            if (!isSelf) {
+                const buttonText = isFriend ? "Unfriend" : "Add Friend";
+                const buttonClass = isFriend ? "unfriend-btn" : "";
+                buttonHtml = `<button data-user-id="${profile.user_id}" class="${buttonClass}">${buttonText}</button>`;
+            }
+
+            const friendItem = document.createElement("div");
+            friendItem.className = "friend-item";
+            
+            let avatarHtml;
+            if (profile.avatar_url) {
+                avatarHtml = `<img src="${profile.avatar_url}" alt="${profile.full_name}">`;
+            } else {
+                avatarHtml = `<div class="user-icon"><i class="fa-solid fa-user"></i></div>`;
+            }
+
+            friendItem.innerHTML = `
+                ${avatarHtml}
+                <div class="friend-info">
+                    <h4>${profile.full_name}</h4>
+                </div>
+                ${buttonHtml}
+            `;
+            
+            friendsListContainer.appendChild(friendItem);
+        });
+    }
+
+    // Attach event listeners to the buttons inside the modal
+    friendsListContainer.querySelectorAll("button").forEach(button => {
+        button.addEventListener("click", async (event) => {
+            const userId = event.target.dataset.userId;
+            const action = event.target.textContent.includes('Unfriend') ? 'unfriend' : 'add';
+            await handleFriendAction(userId, action);
+            await fetchAndDisplayFriends(profileIdToLoad); // Re-fetch to update the list
+        });
+    });
+}
+
+async function fetchProfiles(ids) {
+    const { data: profiles, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .in('user_id', ids);
+
+    if (error) {
+        console.error("Error fetching profiles:", error.message);
+        return [];
+    }
+    return profiles;
+}
+
+async function fetchCurrentUsersFriends(userId) {
+    const { data, error } = await supabase
+        .from('friend_requests')
+        .select(`sender_id, receiver_id`)
+        .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
+        .eq('status', 'accepted');
+    
+    if (error) {
+        console.error("Error fetching current user's friends:", error.message);
+        return new Set();
+    }
+
+    const friendIds = new Set();
+    data.forEach(friendship => {
+        const friendId = friendship.sender_id === userId ? friendship.receiver_id : friendship.sender_id;
+        friendIds.add(friendId);
+    });
+    return friendIds;
+}
+
+async function handleFriendAction(userId, action) {
+    if (action === 'unfriend') {
+        const { error } = await supabase
+            .from('friend_requests')
+            .delete()
+            .or(`and(sender_id.eq.${currentUserId},receiver_id.eq.${userId}),and(sender_id.eq.${userId},receiver_id.eq.${currentUserId})`);
+        
+        if (error) {
+            showMessage("Failed to unfriend: " + error.message);
+        } else {
+            showMessage("Unfriended successfully!");
+        }
+    } else { // 'add' or 'accept'
+        // Check if a request already exists
+        const { data: existingRequest, error: checkError } = await supabase
+            .from('friend_requests')
+            .select('*')
+            .or(`sender_id.eq.${currentUserId},receiver_id.eq.${userId}`)
+            .or(`sender_id.eq.${userId},receiver_id.eq.${currentUserId}`)
+            .limit(1)
+            .single();
+        
+        if (checkError && checkError.code !== "PGRST116") {
+            return showMessage("Error checking for existing request: " + checkError.message);
+        }
+
+        if (existingRequest) {
+            if (existingRequest.status === 'accepted') {
+                return showMessage("You are already friends!");
+            } else if (existingRequest.sender_id === currentUserId) {
+                return showMessage("Friend request already sent!");
+            } else if (existingRequest.receiver_id === currentUserId) {
+                // Logic to accept the request
+                const { error: updateError } = await supabase
+                    .from('friend_requests')
+                    .update({ status: 'accepted' })
+                    .eq('id', existingRequest.id);
+                if (updateError) {
+                    return showMessage("Failed to accept request: " + updateError.message);
+                }
+                showMessage("Friend request accepted!");
+            }
+        } else {
+            // Send a new friend request
+            const { error: insertError } = await supabase
+                .from('friend_requests')
+                .insert({ sender_id: currentUserId, receiver_id: userId });
+            
+            if (insertError) {
+                return showMessage("Failed to send request: " + insertError.message);
+            }
+
+            const { data: senderProfile } = await supabase
+                .from('profiles')
+                .select('full_name')
+                .eq('user_id', currentUserId)
+                .single();
+
+            const message = `${senderProfile.full_name} sent you a friend request.`;
+            await supabase.from('notifications').insert({
+                recipient_id: userId,
+                sender_id: currentUserId,
+                type: 'friend_request',
+                message: message,
+                related_id: currentUserId
+            });
+            
+            showMessage("Friend request sent!");
+        }
+    }
+    loadProfile();
+}
+
+loadProfile();
+</script>
+</body>
+</html>
