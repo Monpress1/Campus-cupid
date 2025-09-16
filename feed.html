@@ -8,6 +8,8 @@
     <script src="https://unpkg.com/compressorjs/dist/compressor.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Bebas+Neue&display=swap" rel="stylesheet">
+    <link rel="manifest" href="manifest.json">
+
     <style>
         /* Base Styles & Utilities */
         body {
@@ -367,7 +369,7 @@
             font-weight: bold;
             text-transform: uppercas;
         }
-                .ad-card h2 { color: #fff; margin-top: 0; margin-bottom: 0.8rem; font-size: 1.3rem;}
+        .ad-card h2 { color: #fff; margin-top: 0; margin-bottom: 0.8rem; font-size: 1.3rem;}
         .ad-card p { font-size: 0.95rem; line-height: 1.5; color: black; margin-bottom: 1rem;}
         .ad-card img { max-width: 100%; border-radius: 0.5rem; margin-top: 0.8rem; display: block; }
         .ad-card .ad-link {
@@ -565,9 +567,7 @@
 
     <div class="custom-alert" id="customAlert"></div>
 
-    <!-- Floating Post Button -->
     <button id="floatingPostBtn" title="Create Post"><i class="fa-solid fa-plus"></i></button>
-    <!-- Post Modal Overlay -->
     <div id="postModalOverlay">
       <div id="postModal">
         <button id="closePostModalBtn" title="Close">&times;</button>
@@ -591,7 +591,7 @@
         <div class="navbar">
             <div class="logo">
                 <i class="fa-solid fa-heart-circle-bolt"></i>
-                <span class="title">Campus Cupid</span>
+                <span class="title">Campus Cupid</span>  
             </div>
             <div class="menu">
                 <i class="fa-solid fa-bars" id="menuBtn"></i>
@@ -608,9 +608,7 @@
                 </div>
             </div>
         </div>
-           <!-- People You May Know Suggestions -->
-<div id="suggestedFriendsBar" style="margin-bottom:1.5rem;"></div>
-<!-- Sponsored Ad Section -->
+           <div id="suggestedFriendsBar" style="margin-bottom:1.5rem;"></div>
 <div id="sponsoredAdBar" style="margin-bottom:1.5rem;"></div>
 
         <div id="feed" class="feed">
@@ -619,6 +617,8 @@
             <div class="placeholder-card"></div>
         </div>
     </div>
+    
+    <button id="installBtn" style="display: none;">Install App</button>
 
     <div id="mediaModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:9999; justify-content:center; align-items:center;">
         <img id="modalImage" style="max-width:90%; max-height:90%; object-fit:contain; display:none;">
@@ -635,401 +635,451 @@
     </div>
 
     <script>
-        const SUPABASE_URL = "https://vfbjwkfurleatfdrabdg.supabase.co";
-        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmYmp3a2Z1cmxlYXRmZHJhYmRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MjAwNDIsImV4cCI6MjA3Mjk5NjA0Mn0.hguIfyynGc19tsSm9u66qy5IeUv40_mE8-JBjqnOQBE";
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      // --- Supabase and Element Initialization ---
+const SUPABASE_URL = "https://vfbjwkfurleatfdrabdg.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmYmp3a2Z1cmxlYXRmZHJhYmRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MjAwNDIsImV4cCI6MjA3Mjk5NjA0Mn0.hguIfyynGc19tsSm9u66qy5IeUv40_mE8-JBjqnOQBE";
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        const feedContainer = document.getElementById('feed');
-        const postContentInput = document.getElementById('postContent');
-        const postMediaUploadInput = document.getElementById('postMediaUpload');
-        const submitPostBtn = document.getElementById('submitPostBtn');
-        const postPreview = document.getElementById('postPreview');
-        const previewFileName = document.getElementById('previewFileName');
-        const removeMediaBtn = document.getElementById('removeMedia');
-        const notificationBadge = document.getElementById('notificationBadge');
-        const loadingOverlay = document.getElementById('loading-overlay');
-        const customAlert = document.getElementById('customAlert');
+const feedContainer = document.getElementById('feed');
+const postContentInput = document.getElementById('postContent');
+const postMediaUploadInput = document.getElementById('postMediaUpload');
+const submitPostBtn = document.getElementById('submitPostBtn');
+const postPreview = document.getElementById('postPreview');
+const previewFileName = document.getElementById('previewFileName');
+const removeMediaBtn = document.getElementById('removeMedia');
+const notificationBadge = document.getElementById('notificationBadge');
+const loadingOverlay = document.getElementById('loading-overlay');
+const customAlert = document.getElementById('customAlert');
 
-        // Media Modal Elements
-        const mediaModal = document.getElementById('mediaModal');
-        const modalImage = document.getElementById('modalImage');
-        const modalVideo = document.getElementById('modalVideo');
-        const closeMediaModal = document.getElementById('closeMediaModal');
+// Media Modal Elements
+const mediaModal = document.getElementById('mediaModal');
+const modalImage = document.getElementById('modalImage');
+const modalVideo = document.getElementById('modalVideo');
+const closeMediaModal = document.getElementById('closeMediaModal');
 
-        // NEW: Full Post Modal Elements
-        const fullPostModal = document.getElementById('fullPostModal');
-        const modalPostContainer = document.getElementById('modalPostContainer');
-        const closeFullPostModalBtn = document.getElementById('closeFullPostModal');
+// Full Post Modal Elements
+const fullPostModal = document.getElementById('fullPostModal');
+const modalPostContainer = document.getElementById('modalPostContainer');
+const closeFullPostModalBtn = document.getElementById('closeFullPostModal');
 
-        let currentFile = null;
+let currentFile = null;
 
-        // --- Loading Sign Functions ---
-        function showLoading() {
-            loadingOverlay.style.display = 'flex';
+// --- Pagination for Feed ---
+let currentPage = 1;
+const POSTS_PER_PAGE = 5;
+let allPosts = [];
+let allAds = [];
+let isLoading = false;
+let hasMorePosts = true;
+
+// --- PWA Installation Prompt ---
+let deferredPrompt;
+const installBtn = document.getElementById('installBtn');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    // Prevents the default browser install prompt
+    e.preventDefault();
+    // Stash the event so we can trigger it later
+    deferredPrompt = e;
+    // Show the custom install button
+    if (installBtn) {
+        installBtn.style.display = 'block';
+    }
+});
+
+if (installBtn) {
+    installBtn.addEventListener('click', () => {
+        // Hide the button once clicked
+        installBtn.style.display = 'none';
+        // Show the installation prompt from the browser
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            // Wait for the user to respond to the prompt
+            deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    console.log('User accepted the install prompt');
+                    showAlert("App installed successfully!", false);
+                } else {
+                    console.log('User dismissed the install prompt');
+                    showAlert("Installation cancelled.", true);
+                }
+                deferredPrompt = null;
+            });
         }
+    });
+}
 
-        function hideLoading() {
-            loadingOverlay.style.display = 'none';
-        }
-
-        // --- Custom Alert Function ---
-        function showAlert(message, isError = false) {
-            customAlert.textContent = message;
-            customAlert.classList.remove('error');
-            if (isError) {
-                customAlert.classList.add('error');
-            }
-            customAlert.classList.add('show');
-            setTimeout(() => {
-                customAlert.classList.remove('show');
-            }, 3000);
-        }
-
-        // --- Utility Functions (TimeAgo, fetchNotifications) ---
-        function timeAgo(dateString) {
-            const now = new Date();
-            const past = new Date(dateString);
-            const seconds = Math.floor((now - past) / 1000);
-
-            let interval = seconds / 31536000;
-            if (interval > 1) return Math.floor(interval) + " years ago";
-            interval = seconds / 2592000;
-            if (interval > 1) return Math.floor(interval) + " months ago";
-            interval = seconds / 86400;
-            if (interval > 1) return Math.floor(interval) + " days ago";
-            interval = seconds / 3600;
-            if (interval > 1) return Math.floor(interval) + " hours ago";
-            interval = seconds / 60;
-            if (interval > 1) return Math.floor(interval) + " minutes ago";
-            return Math.floor(seconds) + " seconds ago";
-        }
-
-        async function fetchNotifications() {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
-
-            const { count, error } = await supabase
-                .from('notifications')
-                .select('*', { count: 'exact', head: true })
-                .eq('recipient_id', user.id)
-                .eq('read_status', false);
-
-            if (error) {
-                console.error("Error fetching notifications:", error);
-                return;
-            }
-
-            if (count > 0) {
-                notificationBadge.textContent = count;
-                notificationBadge.style.display = 'block';
-            } else {
-                notificationBadge.style.display = 'none';
-            }
-        }
-
-        // --- Menu Toggle ---
-        document.getElementById("menuBtn").addEventListener("click", () => {
-            const menu = document.getElementById("menuContent");
-            menu.style.display = menu.style.display === "block" ? "none" : "block";
+// --- Register Service Worker ---
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').then(registration => {
+            console.log('Service Worker registered! Scope is:', registration.scope);
+        }).catch(err => {
+            console.log('Service Worker registration failed:', err);
         });
+    });
+}
 
-        // --- Logout Functionality ---
-        document.getElementById("logoutBtn").addEventListener("click", async () => {
-            await supabase.auth.signOut();
+// --- Loading Sign Functions ---
+function showLoading() {
+    loadingOverlay.style.display = 'flex';
+}
+
+function hideLoading() {
+    loadingOverlay.style.display = 'none';
+}
+
+// --- Custom Alert Function ---
+function showAlert(message, isError = false) {
+    customAlert.textContent = message;
+    customAlert.classList.remove('error');
+    if (isError) {
+        customAlert.classList.add('error');
+    }
+    customAlert.classList.add('show');
+    setTimeout(() => {
+        customAlert.classList.remove('show');
+    }, 3000);
+}
+
+// --- Utility Functions (TimeAgo, fetchNotifications) ---
+function timeAgo(dateString) {
+    const now = new Date();
+    const past = new Date(dateString);
+    const seconds = Math.floor((now - past) / 1000);
+
+    let interval = seconds / 31536000;
+    if (interval > 1) return Math.floor(interval) + " years ago";
+    interval = seconds / 2592000;
+    if (interval > 1) return Math.floor(interval) + " months ago";
+    interval = seconds / 86400;
+    if (interval > 1) return Math.floor(interval) + " days ago";
+    interval = seconds / 3600;
+    if (interval > 1) return Math.floor(interval) + " hours ago";
+    interval = seconds / 60;
+    if (interval > 1) return Math.floor(interval) + " minutes ago";
+    return Math.floor(seconds) + " seconds ago";
+}
+
+async function fetchNotifications() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { count, error } = await supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('recipient_id', user.id)
+        .eq('read_status', false);
+
+    if (error) {
+        console.error("Error fetching notifications:", error);
+        return;
+    }
+
+    if (count > 0) {
+        notificationBadge.textContent = count;
+        notificationBadge.style.display = 'block';
+    } else {
+        notificationBadge.style.display = 'none';
+    }
+}
+
+// --- Menu Toggle ---
+document.getElementById("menuBtn").addEventListener("click", () => {
+    const menu = document.getElementById("menuContent");
+    menu.style.display = menu.style.display === "block" ? "none" : "block";
+});
+
+// --- Logout Functionality ---
+document.getElementById("logoutBtn").addEventListener("click", async () => {
+    await supabase.auth.signOut();
+    window.location.href = "index.html";
+});
+
+// --- Post Media Upload Preview and Removal ---
+postMediaUploadInput.addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    if (file) {
+        currentFile = file;
+        previewFileName.textContent = file.name;
+        postPreview.style.display = 'flex';
+    } else {
+        currentFile = null;
+        postPreview.style.display = 'none';
+    }
+});
+
+removeMediaBtn.addEventListener('click', () => {
+    currentFile = null;
+    postMediaUploadInput.value = '';
+    postPreview.style.display = 'none';
+});
+
+// --- Create Post Functionality ---
+submitPostBtn.addEventListener('click', async () => {
+    const postContent = postContentInput.value.trim();
+    if (!postContent && !currentFile) {
+        showAlert("Please write something or add media to your post.", true);
+        return;
+    }
+
+    submitPostBtn.disabled = true;
+    submitPostBtn.textContent = "Posting...";
+
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            showAlert("You must be logged in to post.", true);
             window.location.href = "index.html";
-        });
+            return;
+        }
 
-        // --- Post Media Upload Preview and Removal ---
-        postMediaUploadInput.addEventListener('change', (event) => {
-            const file = event.target.files[0];
-            if (file) {
-                currentFile = file;
-                previewFileName.textContent = file.name;
-                postPreview.style.display = 'flex';
+        let imageUrl = null;
+        let videoUrl = null;
+
+        if (currentFile) {
+            const fileType = currentFile.type.startsWith('image/') ? 'images' : 'videos';
+            const fileExt = currentFile.name.split('.').pop();
+            const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+            const filePath = `post_media/${fileName}`;
+
+            let fileToUpload = currentFile;
+            if (fileType === 'images') {
+                fileToUpload = await new Promise((resolve, reject) => {
+                    new Compressor(currentFile, {
+                        quality: 0.5,
+                        maxWidth: 1200,
+                        maxHeight: 1200,
+                        success: resolve,
+                        error: reject,
+                    });
+                });
+            }
+
+            const { data: uploadData, error: uploadError } = await supabase.storage
+                .from('post_media')
+                .upload(filePath, fileToUpload, { upsert: false });
+
+            if (uploadError) throw new Error("Media upload failed: " + uploadError.message);
+
+            const { data: publicUrlData } = supabase.storage.from('post_media').getPublicUrl(filePath);
+            if (fileType === 'images') {
+                imageUrl = publicUrlData.publicUrl;
             } else {
-                currentFile = null;
-                postPreview.style.display = 'none';
+                videoUrl = publicUrlData.publicUrl;
             }
+        }
+
+        const { error: postError } = await supabase.from('posts').insert({
+            author_id: user.id,
+            content: postContent,
+            image_url: imageUrl,
+            video_url: videoUrl,
         });
 
-        removeMediaBtn.addEventListener('click', () => {
-            currentFile = null;
-            postMediaUploadInput.value = '';
-            postPreview.style.display = 'none';
+        if (postError) throw new Error("Failed to create post: " + postError.message);
+
+        showAlert("Post created successfully!");
+        postContentInput.value = '';
+        removeMediaBtn.click();
+        postModalOverlay.style.display = 'none';
+        loadFeed();
+
+    } catch (error) {
+        console.error("Error creating post:", error);
+        showAlert("Failed to create post: " + error.message, true);
+    } finally {
+        submitPostBtn.disabled = false;
+        submitPostBtn.textContent = "Post";
+    }
+});
+
+// --- Render Post Function ---
+async function renderPost(post, currentUserId, userProfilesMap, likesMap, commentsMap) {
+    const postCard = document.createElement('div');
+    postCard.className = 'post-card';
+    postCard.id = `post-${post.id}`;
+
+    const authorProfile = userProfilesMap[post.author_id] || { full_name: "Unknown User", avatar_url: "" };
+    const avatarSrc = authorProfile.avatar_url ? authorProfile.avatar_url : '';
+
+    const likesArray = likesMap[post.id] || [];
+    const likesCount = likesArray.length;
+    const isLikedByUser = likesArray.includes(currentUserId);
+
+    const commentsCount = commentsMap[post.id] || 0;
+
+    let mediaHTML = '';
+    if (post.image_url) {
+        mediaHTML = `<div class="post-media-container"><img data-src="${post.image_url}" alt="Post Image" class="lazy-load" data-media-url="${post.image_url}" data-media-type="image"></div>`;
+    } else if (post.video_url) {
+        mediaHTML = `<div class="post-media-container"><video controls data-src="${post.video_url}" class="lazy-load" data-media-url="${post.video_url}" data-media-type="video"></video></div>`;
+    }
+
+    postCard.innerHTML = `
+        <div class="post-header">
+            <a href="profile.html?id=${post.author_id}" class="post-avatar-link">
+                ${avatarSrc ? `<img src="${avatarSrc}" alt="Author Avatar" class="post-avatar">` : `<div class="user-icon"><i class="fa-solid fa-user"></i></div>`}
+            </a>
+            <a href="profile.html?id=${post.author_id}" class="author-name">${authorProfile.full_name}</a>
+            <span class="post-time">${timeAgo(post.created_at)}</span>
+        </div>
+        <div class="post-content">
+            <p>${post.content || ''}</p>
+            ${mediaHTML}
+        </div>
+        <div class="post-actions-bar">
+            <button class="like-btn ${isLikedByUser ? 'liked' : ''}" data-post-id="${post.id}">
+                <i class="fa-solid fa-heart"></i> <span class="like-count">${likesCount}</span> Likes
+            </button>
+            <button class="comment-btn" data-post-id="${post.id}">
+                <i class="fa-solid fa-comment"></i> <span class="comment-count">${commentsCount}</span> Comments
+            </button>
+        </div>
+    `;
+    feedContainer.appendChild(postCard);
+
+    const mediaElement = postCard.querySelector('img[data-media-url], video[data-media-url]');
+    if (mediaElement) {
+        mediaElement.addEventListener('click', (e) => {
+            const mediaUrl = e.target.dataset.mediaUrl;
+            const mediaType = e.target.dataset.mediaType;
+            modalImage.style.display = 'none';
+            modalVideo.style.display = 'none';
+
+            if (mediaType === 'image') {
+                modalImage.src = mediaUrl;
+                modalImage.style.display = 'block';
+            } else if (mediaType === 'video') {
+                modalVideo.src = mediaUrl;
+                modalVideo.style.display = 'block';
+            }
+            mediaModal.style.display = 'flex';
         });
+    }
 
-        // --- Create Post Functionality ---
-        submitPostBtn.addEventListener('click', async () => {
-            const postContent = postContentInput.value.trim();
-            if (!postContent && !currentFile) {
-                showAlert("Please write something or add media to your post.", true);
-                return;
-            }
+    postCard.querySelector('.like-btn').addEventListener('click', async (e) => {
+        e.preventDefault();
+        const postId = e.currentTarget.dataset.postId;
+        await handleLike(postId, e.currentTarget);
+    });
 
-            submitPostBtn.disabled = true;
-            submitPostBtn.textContent = "Posting...";
+    postCard.querySelector('.comment-btn').addEventListener('click', async (e) => {
+        e.preventDefault();
+        const postId = e.currentTarget.dataset.postId;
+        const { data: comments } = await supabase
+            .from('comments')
+            .select(`
+                id,
+                comment_text,
+                created_at,
+                author_id,
+                profiles(full_name, avatar_url)
+            `)
+            .eq('post_id', postId)
+            .order('created_at', { ascending: true });
 
-            try {
-                const { data: { user } } = await supabase.auth.getUser();
-                if (!user) {
-                    showAlert("You must be logged in to post.", true);
-                    window.location.href = "index.html";
-                    return;
-                }
-
-                let imageUrl = null;
-                let videoUrl = null;
-
-                if (currentFile) {
-                    const fileType = currentFile.type.startsWith('image/') ? 'images' : 'videos';
-                    const fileExt = currentFile.name.split('.').pop();
-                    const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-                    const filePath = `post_media/${fileName}`;
-
-                    let fileToUpload = currentFile;
-                    if (fileType === 'images') {
-                        // Image compression
-                        fileToUpload = await new Promise((resolve, reject) => {
-                            new Compressor(currentFile, {
-                                quality: 0.5,
-                                maxWidth: 1200,
-                                maxHeight: 1200,
-                                success: resolve,
-                                error: reject,
-                            });
-                        });
-                    }
-
-                    const { data: uploadData, error: uploadError } = await supabase.storage
-                        .from('post_media')
-                        .upload(filePath, fileToUpload, { upsert: false });
-
-                    if (uploadError) throw new Error("Media upload failed: " + uploadError.message);
-
-                    const { data: publicUrlData } = supabase.storage.from('post_media').getPublicUrl(filePath);
-                    if (fileType === 'images') {
-                        imageUrl = publicUrlData.publicUrl;
-                    } else {
-                        videoUrl = publicUrlData.publicUrl;
-                    }
-                }
-
-                const { error: postError } = await supabase.from('posts').insert({
-                    author_id: user.id,
-                    content: postContent,
-                    image_url: imageUrl,
-                    video_url: videoUrl,
-                });
-
-                if (postError) throw new Error("Failed to create post: " + postError.message);
-
-                showAlert("Post created successfully!");
-                postContentInput.value = '';
-                removeMediaBtn.click();
-                postModalOverlay.style.display = 'none'; // Close modal after posting
-                loadFeed(); // Reload the whole feed after posting a new post to show it at the top.
-
-            } catch (error) {
-                console.error("Error creating post:", error);
-                showAlert("Failed to create post: " + error.message, true);
-            } finally {
-                submitPostBtn.disabled = false;
-                submitPostBtn.textContent = "Post";
-            }
-        });
-
-        // --- Render Post Function ---
-        async function renderPost(post, currentUserId, userProfilesMap, likesMap, commentsMap) {
-            const postCard = document.createElement('div');
-            postCard.className = 'post-card';
-            postCard.id = `post-${post.id}`;
-
-            const authorProfile = userProfilesMap[post.author_id] || { full_name: "Unknown User", avatar_url: "" };
-            const avatarSrc = authorProfile.avatar_url ? authorProfile.avatar_url : '';
-            
-            const likesArray = likesMap[post.id] || [];
-            const likesCount = likesArray.length;
-            const isLikedByUser = likesArray.includes(currentUserId);
-            
-            const commentsCount = commentsMap[post.id] || 0;
-            
-            let mediaHTML = '';
-            if (post.image_url) {
-                mediaHTML = `<div class="post-media-container"><img data-src="${post.image_url}" alt="Post Image" class="lazy-load" data-media-url="${post.image_url}" data-media-type="image"></div>`;
-            } else if (post.video_url) {
-                mediaHTML = `<div class="post-media-container"><video controls data-src="${post.video_url}" class="lazy-load" data-media-url="${post.video_url}" data-media-type="video"></video></div>`;
-            }
-
-            postCard.innerHTML = `
-                <div class="post-header">
-                    <a href="profile.html?id=${post.author_id}" class="post-avatar-link">
-                        ${avatarSrc ? `<img src="${avatarSrc}" alt="Author Avatar" class="post-avatar">` : `<div class="user-icon"><i class="fa-solid fa-user"></i></div>`}
-                    </a>
-                    <a href="profile.html?id=${post.author_id}" class="author-name">${authorProfile.full_name}</a>
-                    <span class="post-time">${timeAgo(post.created_at)}</span>
+        const commentsHTML = comments && comments.length > 0 ? comments.map(comment => `
+            <div class="comment-item">
+                <div class="comment-header">
+                    <a href="profile.html?id=${comment.author_id}" class="comment-author">${comment.profiles.full_name || 'Unknown User'}</a>
+                    <span class="comment-time">${timeAgo(comment.created_at)}</span>
                 </div>
-                <div class="post-content">
-                    <p>${post.content || ''}</p>
-                    ${mediaHTML}
-                </div>
-                <div class="post-actions-bar">
-                    <button class="like-btn ${isLikedByUser ? 'liked' : ''}" data-post-id="${post.id}">
-                        <i class="fa-solid fa-heart"></i> <span class="like-count">${likesCount}</span> Likes
-                    </button>
-                    <button class="comment-btn" data-post-id="${post.id}">
-                        <i class="fa-solid fa-comment"></i> <span class="comment-count">${commentsCount}</span> Comments
-                    </button>
-                </div>
-            `;
-            feedContainer.appendChild(postCard);
+                <span class="comment-text">${comment.comment_text}</span>
+            </div>
+        `).join('') : `<p id="no-comments-msg-${postId}" style="font-size:0.9rem; color:#94a3b8; text-align: center;">No comments yet. Be the first!</p>`;
 
-            const mediaElement = postCard.querySelector('img[data-media-url], video[data-media-url]');
-            if (mediaElement) {
-                mediaElement.addEventListener('click', (e) => {
-                    const mediaUrl = e.target.dataset.mediaUrl;
-                    const mediaType = e.target.dataset.mediaType;
-
-                    modalImage.style.display = 'none';
-                    modalVideo.style.display = 'none';
-                    
-                    if (mediaType === 'image') {
-                        modalImage.src = mediaUrl;
-                        modalImage.style.display = 'block';
-                    } else if (mediaType === 'video') {
-                        modalVideo.src = mediaUrl;
-                        modalVideo.style.display = 'block';
-                    }
-                    mediaModal.style.display = 'flex';
-                });
-            }
-
-            postCard.querySelector('.like-btn').addEventListener('click', async (e) => {
-                e.preventDefault();
-                const postId = e.currentTarget.dataset.postId;
-                await handleLike(postId, e.currentTarget);
-            });
-
-            postCard.querySelector('.comment-btn').addEventListener('click', async (e) => {
-                e.preventDefault();
-                const postId = e.currentTarget.dataset.postId;
-                
-                // Fetch comments for the modal
-                const { data: comments } = await supabase
-                    .from('comments')
-                    .select(`
-                        id,
-                        comment_text,
-                        created_at,
-                        author_id,
-                        profiles(full_name, avatar_url)
-                    `)
-                    .eq('post_id', postId)
-                    .order('created_at', { ascending: true });
-
-                const commentsHTML = comments && comments.length > 0 ? comments.map(comment => `
-                    <div class="comment-item">
-                        <div class="comment-header">
-                            <a href="profile.html?id=${comment.author_id}" class="comment-author">${comment.profiles.full_name || 'Unknown User'}</a>
-                            <span class="comment-time">${timeAgo(comment.created_at)}</span>
-                        </div>
-                        <span class="comment-text">${comment.comment_text}</span>
+        const postCardContent = postCard.innerHTML;
+        const modalContent = `
+            <div class="post-card">
+                ${postCardContent}
+                <div class="comments-section" id="comments-section-${postId}">
+                    <div class="comment-list" id="comment-list-${postId}">
+                        ${commentsHTML}
                     </div>
-                `).join('') : `<p id="no-comments-msg-${postId}" style="font-size:0.9rem; color:#94a3b8; text-align: center;">No comments yet. Be the first!</p>`;
-
-                const postCardContent = postCard.innerHTML;
-                const modalContent = `
-                    <div class="post-card">
-                        ${postCardContent}
-                        <div class="comments-section" id="comments-section-${postId}">
-                            <div class="comment-list" id="comment-list-${postId}">
-                                ${commentsHTML}
-                            </div>
-                            <div class="comment-input-wrapper">
-                                <input type="text" placeholder="Add a comment..." id="comment-input-${postId}">
-                                <button class="submit-comment-btn" data-post-id="${postId}">Post</button>
-                            </div>
-                        </div>
+                    <div class="comment-input-wrapper">
+                        <input type="text" placeholder="Add a comment..." id="comment-input-${postId}">
+                        <button class="submit-comment-btn" data-post-id="${postId}">Post</button>
                     </div>
-                `;
-                openFullPostModal(modalContent);
+                </div>
+            </div>
+        `;
+        openFullPostModal(modalContent);
 
-                // Re-attach event listeners to the new modal content
-                const modalLikeBtn = modalPostContainer.querySelector('.like-btn');
-                const modalCommentInput = modalPostContainer.querySelector(`#comment-input-${postId}`);
-                const modalCommentSubmitBtn = modalPostContainer.querySelector('.submit-comment-btn');
-                
-                if (modalLikeBtn) {
-                    modalLikeBtn.addEventListener('click', (e) => handleLike(postId, e.currentTarget));
-                }
-                if (modalCommentSubmitBtn) {
-                    modalCommentSubmitBtn.addEventListener('click', async () => {
-                        const commentText = modalCommentInput.value.trim();
-                        if (commentText) {
-                            await handleComment(postId, commentText, true);
-                            modalCommentInput.value = '';
-                        }
-                    });
-                }
-                const modalMediaElement = modalPostContainer.querySelector('img[data-media-url], video[data-media-url]');
-                 if (modalMediaElement) {
-                    modalMediaElement.addEventListener('click', (e) => {
-                        const mediaUrl = e.target.dataset.mediaUrl;
-                        const mediaType = e.target.dataset.mediaType;
+        const modalLikeBtn = modalPostContainer.querySelector('.like-btn');
+        const modalCommentInput = modalPostContainer.querySelector(`#comment-input-${postId}`);
+        const modalCommentSubmitBtn = modalPostContainer.querySelector('.submit-comment-btn');
 
-                        modalImage.style.display = 'none';
-                        modalVideo.style.display = 'none';
-                        
-                        if (mediaType === 'image') {
-                            modalImage.src = mediaUrl;
-                            modalImage.style.display = 'block';
-                        } else if (mediaType === 'video') {
-                            modalVideo.src = mediaUrl;
-                            modalVideo.style.display = 'block';
-                        }
-                        mediaModal.style.display = 'flex';
-                    });
+        if (modalLikeBtn) {
+            modalLikeBtn.addEventListener('click', (e) => handleLike(postId, e.currentTarget));
+        }
+        if (modalCommentSubmitBtn) {
+            modalCommentSubmitBtn.addEventListener('click', async () => {
+                const commentText = modalCommentInput.value.trim();
+                if (commentText) {
+                    await handleComment(postId, commentText, true);
+                    modalCommentInput.value = '';
                 }
             });
         }
+        const modalMediaElement = modalPostContainer.querySelector('img[data-media-url], video[data-media-url]');
+         if (modalMediaElement) {
+            modalMediaElement.addEventListener('click', (e) => {
+                const mediaUrl = e.target.dataset.mediaUrl;
+                const mediaType = e.target.dataset.mediaType;
+                modalImage.style.display = 'none';
+                modalVideo.style.display = 'none';
 
-        // --- Render Ad Function ---
-        function renderAd(ad) {
-            const adCard = document.createElement('div');
-            adCard.className = 'ad-card';
-
-            adCard.innerHTML = `
-                <span class="ad-label">Sponsored</span>
-                <h2>${ad.title}</h2>
-                <p>${ad.content || ''}</p>
-                ${ad.image_url ? `<div class="post-media-container"><img data-src="${ad.image_url}" alt="Ad Image" class="lazy-load"></div>` : ''}
-                ${ad.target_url ? `<a href="${ad.target_url}" target="_blank" class="ad-link">Learn More <i class="fa-solid fa-arrow-up-right-from-square"></i></a>` : ''}
-            `;
-            feedContainer.appendChild(adCard);
+                if (mediaType === 'image') {
+                    modalImage.src = mediaUrl;
+                    modalImage.style.display = 'block';
+                } else if (mediaType === 'video') {
+                    modalVideo.src = mediaUrl;
+                    modalVideo.style.display = 'block';
+                }
+                mediaModal.style.display = 'flex';
+            });
         }
+    });
+}
 
-        // --- NEW: Full Post Modal Functions ---
-        function openFullPostModal(postCardHTML) {
-            modalPostContainer.innerHTML = postCardHTML;
-            fullPostModal.style.display = 'flex';
-            document.body.style.overflow = 'hidden';
-        }
+// --- Render Ad Function ---
+function renderAd(ad) {
+    const adCard = document.createElement('div');
+    adCard.className = 'ad-card';
 
-        closeFullPostModalBtn.addEventListener('click', () => {
-            fullPostModal.style.display = 'none';
-            modalPostContainer.innerHTML = '';
-            document.body.style.overflow = '';
-        });
+    adCard.innerHTML = `
+        <span class="ad-label">Sponsored</span>
+        <h2>${ad.title}</h2>
+        <p>${ad.content || ''}</p>
+        ${ad.image_url ? `<div class="post-media-container"><img data-src="${ad.image_url}" alt="Ad Image" class="lazy-load"></div>` : ''}
+        ${ad.target_url ? `<a href="${ad.target_url}" target="_blank" class="ad-link">Learn More <i class="fa-solid fa-arrow-up-right-from-square"></i></a>` : ''}
+    `;
+    feedContainer.appendChild(adCard);
+}
 
-        // --- Render Sponsored Ad ---
+// --- Full Post Modal Functions ---
+function openFullPostModal(postCardHTML) {
+    modalPostContainer.innerHTML = postCardHTML;
+    fullPostModal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+closeFullPostModalBtn.addEventListener('click', () => {
+    fullPostModal.style.display = 'none';
+    modalPostContainer.innerHTML = '';
+    document.body.style.overflow = '';
+});
+
+// --- Render Sponsored Ad ---
 async function renderSponsoredAd() {
     const adBar = document.getElementById('sponsoredAdBar');
-    // Sample ad data
     const sampleAd = {
         title: "🌟 Upgrade to Premium!",
         content: "Find your perfect match faster with Premium features. Get highlighted in searches, see who likes you, and more!",
         target_url: "premium.html"
     };
-    
+
     adBar.innerHTML = `
         <div class="ad-card">
             <span class="ad-label">Sponsored</span>
@@ -1046,7 +1096,6 @@ async function renderSponsoredAd() {
 async function renderSuggestedFriends(currentUserId) {
     const bar = document.getElementById('suggestedFriendsBar');
     bar.innerHTML = '<span style="color:#fbbf24; font-size:small; font-weight:bold;">People You May Know:</span>';
-    // Get all accepted friends
     const { data: friends } = await supabase
         .from('friend_requests')
         .select('sender_id,receiver_id')
@@ -1059,7 +1108,6 @@ async function renderSuggestedFriends(currentUserId) {
             if (f.receiver_id !== currentUserId) friendIds.add(f.receiver_id);
         });
     }
-    // Get profiles not in friendIds
     const { data: profiles } = await supabase
         .from('profiles')
         .select('user_id,full_name,avatar_url')
@@ -1070,26 +1118,26 @@ async function renderSuggestedFriends(currentUserId) {
             <div class="suggestion-container">
                 <div class="suggestion-scroll">
                     ${profiles.map(profile => `
-                        <div onclick="window.location='profile.html?id=${profile.user_id}'" 
+                        <div onclick="window.location='profile.html?id=${profile.user_id}'"
                              style="min-width:120px;cursor:pointer;background:rgba(255,255,255,0.08);
                                     border-radius:1rem;padding:1rem;margin-right:1rem;
                                     display:flex;flex-direction:column;align-items:center;
                                     box-shadow:0 2px 8px rgba(0,0,0,0.1);">
-                            ${profile.avatar_url 
-                                ? `<img src="${profile.avatar_url}" style="width:60px;height:60px;border-radius:50%;object-fit:cover;margin-bottom:0.5rem;">` 
+                            ${profile.avatar_url
+                                ? `<img src="${profile.avatar_url}" style="width:60px;height:60px;border-radius:50%;object-fit:cover;margin-bottom:0.5rem;">`
                                 : `<div style="width:60px;height:60px;border-radius:50%;background:#475569;display:flex;align-items:center;justify-content:center;color:#fff;font-size:2rem;margin-bottom:0.5rem;"><i class="fa-solid fa-user"></i></div>`}
                             <span style="color:#fff;font-size:1rem;text-align:center;white-space:normal;width:100%;">${profile.full_name}</span>
                         </div>
                     `).join('')}
 
                     ${profiles.map(profile => `
-                        <div onclick="window.location='profile.html?id=${profile.user_id}'" 
+                        <div onclick="window.location='profile.html?id=${profile.user_id}'"
                              style="min-width:120px;cursor:pointer;background:rgba(255,255,255,0.08);
                                     border-radius:1rem;padding:1rem;margin-right:1rem;
                                     display:flex;flex-direction:column;align-items:center;
                                     box-shadow:0 2px 8px rgba(0,0,0,0.1);">
-                            ${profile.avatar_url 
-                                ? `<img src="${profile.avatar_url}" style="width:60px;height:60px;border-radius:50%;object-fit:cover;margin-bottom:0.5rem;">` 
+                            ${profile.avatar_url
+                                ? `<img src="${profile.avatar_url}" style="width:60px;height:60px;border-radius:50%;object-fit:cover;margin-bottom:0.5rem;">`
                                 : `<div style="width:60px;height:60px;border-radius:50%;background:#475569;display:flex;align-items:center;justify-content:center;color:#fff;font-size:2rem;margin-bottom:0.5rem;"><i class="fa-solid fa-user"></i></div>`}
                             <span style="color:#fff;font-size:1rem;text-align:center;white-space:normal;width:100%;">${profile.full_name}</span>
                         </div>
@@ -1101,281 +1149,278 @@ async function renderSuggestedFriends(currentUserId) {
     }
 }
 
-// --- Pagination for Feed ---
-        let currentPage = 1;
-        const POSTS_PER_PAGE = 5;
-        let allPosts = [];
-        let allAds = [];
-        let hasMorePosts = true;
+// --- The Pagination for Feed Logic with the fix ---
+async function loadFeed(page = 1, append = false) {
+    if (isLoading) return;
+    isLoading = true;
+    showLoading();
 
-        async function loadFeed(page = 1, append = false) {
-            showLoading();
-            if (!append) {
-                document.querySelectorAll('.placeholder-card').forEach(el => el.remove());
-                feedContainer.innerHTML = '';
-                currentPage = 1;
-                hasMorePosts = true;
-            }
+    const loadMoreBtn = document.getElementById('loadMoreBtn');
+    if (loadMoreBtn) loadMoreBtn.style.display = 'none';
 
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) {
-                window.location.href = "index.html";
-                return;
-            }
+    if (!append) {
+        document.querySelectorAll('.placeholder-card').forEach(el => el.remove());
+        feedContainer.innerHTML = '';
+        currentPage = 1;
+        hasMorePosts = true;
+    }
 
-            const myProfileLink = document.querySelector('.menu-content a[href="profile.html"]');
-            if (myProfileLink) {
-                myProfileLink.href = `profile.html?id=${user.id}`;
-            }
-            fetchNotifications();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        window.location.href = "index.html";
+        return;
+    }
 
-            // Only fetch all posts/ads once, then paginate in-memory for demo simplicity
-            if (!append || allPosts.length === 0) {
-                const [
-                    { data: posts, error: postsError },
-                    { data: likes, error: likesError },
-                    { data: comments, error: commentsError },
-                    { data: ads, error: adsError }
-                ] = await Promise.all([
-                    supabase.from('posts').select('*').order('created_at', { ascending: false }),
-                    supabase.from('likes').select('*'),
-                    supabase.from('comments').select('post_id'),
-                    supabase.from('ads').select('*').eq('is_active', true).order('created_at', { ascending: false })
-                ]);
-                if (postsError) {
-                    console.error("Error fetching posts:", postsError.message);
-                    feedContainer.innerHTML = `<p style="text-align: center; color: #ef4444;">Error loading posts.</p>`;
-                    hideLoading();
-                    return;
-                }
-                allPosts = posts || [];
-                allAds = ads || [];
-            }
+    const myProfileLink = document.querySelector('.menu-content a[href="profile.html"]');
+    if (myProfileLink) {
+        myProfileLink.href = `profile.html?id=${user.id}`;
+    }
+    fetchNotifications();
 
-            // Pagination logic
-            const start = (page - 1) * POSTS_PER_PAGE;
-            const end = start + POSTS_PER_PAGE;
-            const postsToShow = allPosts.slice(start, end);
-            if (postsToShow.length < POSTS_PER_PAGE) hasMorePosts = false;
-
-            // Fetch profiles for visible posts
-            const uniqueUserIds = new Set();
-            postsToShow.forEach(post => uniqueUserIds.add(post.author_id));
-            const { data: profiles, error: profilesError } = await supabase
-                .from('profiles')
-                .select('user_id, full_name, avatar_url')
-                .in('user_id', Array.from(uniqueUserIds));
-            const userProfilesMap = {};
-            if (profiles) profiles.forEach(profile => { userProfilesMap[profile.user_id] = profile; });
-
-            // Likes and comments for visible posts
-            const likes = [];
-            const comments = [];
-            if (allPosts.length > 0) {
-                const postIds = postsToShow.map(p => p.id);
-                const [likesRes, commentsRes] = await Promise.all([
-                    supabase.from('likes').select('*').in('post_id', postIds),
-                    supabase.from('comments').select('post_id').in('post_id', postIds)
-                ]);
-                if (likesRes.data) likes.push(...likesRes.data);
-                if (commentsRes.data) comments.push(...commentsRes.data);
-            }
-            const likesMap = {};
-            likes.forEach(like => {
-                if (!likesMap[like.post_id]) likesMap[like.post_id] = [];
-                likesMap[like.post_id].push(like.user_id);
-            });
-            const commentsMap = {};
-            comments.forEach(comment => {
-                commentsMap[comment.post_id] = (commentsMap[comment.post_id] || 0) + 1;
-            });
-
-            // Render posts
-            for (const post of postsToShow) {
-                renderPost(post, user.id, userProfilesMap, likesMap, commentsMap);
-            }
-
-            // Render ads (optional: show one ad after first page)
-            if (page === 1 && allAds.length > 0) {
-                renderAd(allAds[0]);
-            }
-
-            // Add Load More button if more posts
-            let loadMoreBtn = document.getElementById('loadMoreBtn');
-            if (hasMorePosts) {
-                if (!loadMoreBtn) {
-                    loadMoreBtn = document.createElement('button');
-                    loadMoreBtn.id = 'loadMoreBtn';
-                    loadMoreBtn.textContent = 'Load More';
-                    loadMoreBtn.style.display = 'block';
-                    loadMoreBtn.style.margin = '2rem auto';
-                    loadMoreBtn.style.background = '#fbbf24';
-                    loadMoreBtn.style.color = '#0f172a';
-                    loadMoreBtn.style.fontWeight = 'bold';
-                    loadMoreBtn.style.border = 'none';
-                    loadMoreBtn.style.borderRadius = '1rem';
-                    loadMoreBtn.style.padding = '1rem 2rem';
-                    loadMoreBtn.style.cursor = 'pointer';
-                    feedContainer.appendChild(loadMoreBtn);
-                    loadMoreBtn.addEventListener('click', () => {
-                        currentPage++;
-                        loadFeed(currentPage, true);
-                    });
-                }
-            } else if (loadMoreBtn) {
-                loadMoreBtn.remove();
-            }
-            lazyLoadImages();
+    if (!append || allPosts.length === 0) {
+        const [
+            { data: posts, error: postsError },
+            { data: likes, error: likesError },
+            { data: comments, error: commentsError },
+            { data: ads, error: adsError }
+        ] = await Promise.all([
+            supabase.from('posts').select('*').order('created_at', { ascending: false }),
+            supabase.from('likes').select('*'),
+            supabase.from('comments').select('post_id'),
+            supabase.from('ads').select('*').eq('is_active', true).order('created_at', { ascending: false })
+        ]);
+        if (postsError) {
+            console.error("Error fetching posts:", postsError.message);
+            feedContainer.innerHTML = `<p style="text-align: center; color: #ef4444;">Error loading posts.</p>`;
             hideLoading();
+            isLoading = false;
+            return;
         }
+        allPosts = posts || [];
+        allAds = ads || [];
+    }
 
-        // --- Like / Unlike Post Handler ---
-        async function handleLike(postId, buttonElement) {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) { showAlert("Please log in to like posts.", true); return; }
+    const start = (page - 1) * POSTS_PER_PAGE;
+    const end = start + POSTS_PER_PAGE;
+    const postsToShow = allPosts.slice(start, end);
+    hasMorePosts = allPosts.length > end;
 
-            const { data: existingLike, error: checkError } = await supabase
-                .from('likes')
-                .select('id')
-                .eq('post_id', postId)
-                .eq('user_id', user.id)
-                .single();
+    const uniqueUserIds = new Set();
+    postsToShow.forEach(post => uniqueUserIds.add(post.author_id));
+    const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, avatar_url')
+        .in('user_id', Array.from(uniqueUserIds));
+    const userProfilesMap = {};
+    if (profiles) profiles.forEach(profile => { userProfilesMap[profile.user_id] = profile; });
 
-            if (checkError && checkError.code !== 'PGRST116') {
-                console.error("Error checking like status:", checkError.message);
-                return;
+    const likes = [];
+    const comments = [];
+    if (postsToShow.length > 0) {
+        const postIds = postsToShow.map(p => p.id);
+        const [likesRes, commentsRes] = await Promise.all([
+            supabase.from('likes').select('*').in('post_id', postIds),
+            supabase.from('comments').select('post_id').in('post_id', postIds)
+        ]);
+        if (likesRes.data) likes.push(...likesRes.data);
+        if (commentsRes.data) comments.push(...commentsRes.data);
+    }
+    const likesMap = {};
+    likes.forEach(like => {
+        if (!likesMap[like.post_id]) likesMap[like.post_id] = [];
+        likesMap[like.post_id].push(like.user_id);
+    });
+    const commentsMap = {};
+    comments.forEach(comment => {
+        commentsMap[comment.post_id] = (commentsMap[comment.post_id] || 0) + 1;
+    });
+
+    for (const post of postsToShow) {
+        renderPost(post, user.id, userProfilesMap, likesMap, commentsMap);
+    }
+
+    if (page === 1 && allAds.length > 0) {
+        renderAd(allAds[0]);
+    }
+
+    if (hasMorePosts) {
+        let loadMoreBtn = document.getElementById('loadMoreBtn');
+        if (!loadMoreBtn) {
+            loadMoreBtn = document.createElement('button');
+            loadMoreBtn.id = 'loadMoreBtn';
+            loadMoreBtn.textContent = 'Load More';
+            loadMoreBtn.style.cssText = `
+                display: block;
+                margin: 2rem auto;
+                background: #fbbf24;
+                color: #0f172a;
+                font-weight: bold;
+                border: none;
+                border-radius: 1rem;
+                padding: 1rem 2rem;
+                cursor: pointer;
+            `;
+            feedContainer.appendChild(loadMoreBtn);
+            loadMoreBtn.addEventListener('click', () => {
+                currentPage++;
+                loadFeed(currentPage, true);
+            });
+        } else {
+            feedContainer.appendChild(loadMoreBtn);
+        }
+        loadMoreBtn.style.display = 'block';
+    } else {
+        const btn = document.getElementById('loadMoreBtn');
+        if (btn) btn.remove();
+    }
+
+    lazyLoadImages();
+    hideLoading();
+    isLoading = false;
+}
+// --- Like / Unlike Post Handler ---
+async function handleLike(postId, buttonElement) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { showAlert("Please log in to like posts.", true); return; }
+
+    const { data: existingLike, error: checkError } = await supabase
+        .from('likes')
+        .select('id')
+        .eq('post_id', postId)
+        .eq('user_id', user.id)
+        .single();
+
+    if (checkError && checkError.code !== 'PGRST116') {
+        console.error("Error checking like status:", checkError.message);
+        return;
+    }
+
+    let currentLikes = parseInt(buttonElement.querySelector('.like-count').textContent);
+
+    if (existingLike) {
+        const { error } = await supabase
+            .from('likes')
+            .delete()
+            .eq('id', existingLike.id);
+        if (error) { console.error("Error unliking post:", error.message); return; }
+        buttonElement.classList.remove('liked');
+        buttonElement.querySelector('.like-count').textContent = currentLikes - 1;
+    } else {
+        const { error } = await supabase
+            .from('likes')
+            .insert({ post_id: postId, user_id: user.id });
+        if (error) { console.error("Error liking post:", error.message); return; }
+        buttonElement.classList.add('liked');
+        buttonElement.querySelector('.like-count').textContent = currentLikes + 1;
+    }
+}
+
+// --- Handle Comment Function ---
+async function handleComment(postId, commentText, isModal = false) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { showAlert("Please log in to comment.", true); return; }
+
+    const { data: newComment, error } = await supabase.from('comments').insert({
+        post_id: postId,
+        author_id: user.id,
+        comment_text: commentText,
+    }).select('*, profiles(full_name, avatar_url)').single();
+
+    if (error) {
+        console.error("Error posting comment:", error.message);
+        showAlert("Failed to post comment: " + error.message, true);
+    } else {
+        console.log("Comment posted successfully!");
+
+        if (isModal) {
+            const commentList = document.getElementById(`comment-list-${postId}`);
+            const noCommentsMsg = document.getElementById(`no-comments-msg-${postId}`);
+
+            if (noCommentsMsg) {
+                noCommentsMsg.remove();
             }
 
-            let currentLikes = parseInt(buttonElement.querySelector('.like-count').textContent);
+            const newCommentItem = document.createElement('div');
+            newCommentItem.className = 'comment-item';
+            newCommentItem.innerHTML = `
+                <div class="comment-header">
+                    <a href="profile.html?id=${newComment.author_id}" class="comment-author">${newComment.profiles.full_name || 'Unknown User'}</a>
+                    <span class="comment-time">${timeAgo(newComment.created_at)}</span>
+                </div>
+                <span class="comment-text">${newComment.comment_text}</span>
+            `;
+            commentList.appendChild(newCommentItem);
 
-            if (existingLike) {
-                const { error } = await supabase
-                    .from('likes')
-                    .delete()
-                    .eq('id', existingLike.id);
-                if (error) { console.error("Error unliking post:", error.message); return; }
-                buttonElement.classList.remove('liked');
-                buttonElement.querySelector('.like-count').textContent = currentLikes - 1;
-            } else {
-                const { error } = await supabase
-                    .from('likes')
-                    .insert({ post_id: postId, user_id: user.id });
-                if (error) { console.error("Error liking post:", error.message); return; }
-                buttonElement.classList.add('liked');
-                buttonElement.querySelector('.like-count').textContent = currentLikes + 1;
+            const mainFeedPost = document.getElementById(`post-${postId}`);
+            if (mainFeedPost) {
+                const commentCountElement = mainFeedPost.querySelector('.comment-count');
+                let currentCount = parseInt(commentCountElement.textContent);
+                commentCountElement.textContent = currentCount + 1;
             }
         }
+    }
+}
 
-        // --- Handle Comment Function ---
-        async function handleComment(postId, commentText, isModal = false) {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) { showAlert("Please log in to comment.", true); return; }
+// --- Media Modal Closing ---
+closeMediaModal.addEventListener('click', () => {
+    mediaModal.style.display = 'none';
+    modalImage.src = '';
+    modalVideo.src = '';
+    modalVideo.pause();
+});
 
-            const { data: newComment, error } = await supabase.from('comments').insert({
-                post_id: postId,
-                author_id: user.id,
-                comment_text: commentText,
-            }).select('*, profiles(full_name, avatar_url)').single();
-
-            if (error) {
-                console.error("Error posting comment:", error.message);
-                showAlert("Failed to post comment: " + error.message, true);
-            } else {
-                console.log("Comment posted successfully!");
-
-                if (isModal) {
-                    const commentList = document.getElementById(`comment-list-${postId}`);
-                    const noCommentsMsg = document.getElementById(`no-comments-msg-${postId}`);
-
-                    if (noCommentsMsg) {
-                        noCommentsMsg.remove();
-                    }
-
-                    const newCommentItem = document.createElement('div');
-                    newCommentItem.className = 'comment-item';
-                    newCommentItem.innerHTML = `
-                        <div class="comment-header">
-                            <a href="profile.html?id=${newComment.author_id}" class="comment-author">${newComment.profiles.full_name || 'Unknown User'}</a>
-                            <span class="comment-time">${timeAgo(newComment.created_at)}</span>
-                        </div>
-                        <span class="comment-text">${newComment.comment_text}</span>
-                    `;
-                    commentList.appendChild(newCommentItem);
-
-                    // Update the comment count in the main feed if the post is visible
-                    const mainFeedPost = document.getElementById(`post-${postId}`);
-                    if (mainFeedPost) {
-                        const commentCountElement = mainFeedPost.querySelector('.comment-count');
-                        let currentCount = parseInt(commentCountElement.textContent);
-                        commentCountElement.textContent = currentCount + 1;
-                    }
+// --- Lazy Loading Functionality ---
+function lazyLoadImages() {
+    const lazyImages = document.querySelectorAll('img.lazy-load, video.lazy-load');
+    const observer = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const mediaElement = entry.target;
+                const dataSrc = mediaElement.getAttribute('data-src');
+                if (dataSrc) {
+                    mediaElement.src = dataSrc;
+                    mediaElement.removeAttribute('data-src');
+                    mediaElement.classList.remove('lazy-load');
+                    observer.unobserve(mediaElement);
                 }
             }
-        }
-
-        // --- Media Modal Closing ---
-        closeMediaModal.addEventListener('click', () => {
-            mediaModal.style.display = 'none';
-            modalImage.src = '';
-            modalVideo.src = '';
-            modalVideo.pause();
         });
+    }, {
+        rootMargin: '0px 0px 200px 0px'
+    });
+    lazyImages.forEach(image => {
+        observer.observe(image);
+    });
+}
 
-        // --- Lazy Loading Functionality ---
-        function lazyLoadImages() {
-            const lazyImages = document.querySelectorAll('img.lazy-load, video.lazy-load');
-            const observer = new IntersectionObserver((entries, observer) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        const mediaElement = entry.target;
-                        const dataSrc = mediaElement.getAttribute('data-src');
-                        if (dataSrc) {
-                            mediaElement.src = dataSrc;
-                            mediaElement.removeAttribute('data-src');
-                            mediaElement.classList.remove('lazy-load');
-                            observer.unobserve(mediaElement);
-                        }
-                    }
-                });
-            }, {
-                rootMargin: '0px 0px 200px 0px'
-            });
-            lazyImages.forEach(image => {
-                observer.observe(image);
-            });
-        }
+// --- Initial Load ---
+loadFeed();
 
-        // --- Initial Load ---
-        loadFeed();
+const containerCreatePost = document.querySelector('.container .create-post');
+if (containerCreatePost) containerCreatePost.style.display = 'none';
 
-        // Hide the original create-post section
-        // Hide only the create-post section inside .container, not the modal
-        const containerCreatePost = document.querySelector('.container .create-post');
-        if (containerCreatePost) containerCreatePost.style.display = 'none';
+const floatingPostBtn = document.getElementById('floatingPostBtn');
+const postModalOverlay = document.getElementById('postModalOverlay');
+const closePostModalBtn = document.getElementById('closePostModalBtn');
 
-        // Floating Post Button and Modal logic
-        const floatingPostBtn = document.getElementById('floatingPostBtn');
-        const postModalOverlay = document.getElementById('postModalOverlay');
-        const closePostModalBtn = document.getElementById('closePostModalBtn');
+floatingPostBtn.addEventListener('click', () => {
+    postModalOverlay.style.display = 'flex';
+    setTimeout(() => {
+        document.getElementById('postContent').focus();
+    }, 100);
+});
+closePostModalBtn.addEventListener('click', () => {
+    postModalOverlay.style.display = 'none';
+});
+window.addEventListener('click', (e) => {
+    if (e.target === postModalOverlay) {
+        postModalOverlay.style.display = 'none';
+    }
+});
 
-        floatingPostBtn.addEventListener('click', () => {
-            postModalOverlay.style.display = 'flex';
-            setTimeout(() => {
-                document.getElementById('postContent').focus();
-            }, 100);
-        });
-        closePostModalBtn.addEventListener('click', () => {
-            postModalOverlay.style.display = 'none';
-        });
-        window.addEventListener('click', (e) => {
-            if (e.target === postModalOverlay) {
-                postModalOverlay.style.display = 'none';
-            }
-        });
+renderSponsoredAd();
+renderSuggestedFriends();
 
-        // --- Call renderSponsoredAd and renderSuggestedFriends on initial load ---
-        renderSponsoredAd();
-        renderSuggestedFriends();
     </script>
 </body>
 </html>

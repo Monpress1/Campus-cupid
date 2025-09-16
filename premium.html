@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus Cupid ❤️ - Premium</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Bebas+Neue&display=swap" rel="stylesheet">
+    <style>
+        /* Reusing Base Styles from your Feed Page */
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: linear-gradient(135deg, #0f172a, #1e293b, #334155);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1rem;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            padding: 2rem 1rem;
+        }
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            width: 100%;
+        }
+        .navbar .logo { display: flex; align-items: center; gap: 0.5rem; }
+        .navbar .logo i { font-size: 1.5rem; color: #ef4444; }
+        .navbar .logo .title {
+            font-family: 'Pacifico', cursive;
+            font-size: 1.8rem;
+            color: #fbbf24;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .navbar .menu { position: relative; }
+        .navbar i.fa-bars { font-size: 1.5rem; cursor: pointer; color: #fff; }
+        .menu-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 30px;
+            background: rgba(30,41,59,0.95);
+            border-radius: 0.5rem;
+            min-width: 180px;
+            padding: 0.5rem;
+            z-index: 100;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .menu-content a, .menu-content button {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            width: 100%;
+            padding: 0.7rem;
+            background: none;
+            border: none;
+            color: #fff;
+            text-align: left;
+            cursor: pointer;
+            border-radius: 0.4rem;
+            text-decoration: none;
+        }
+        .menu-content a:hover, .menu-content button:hover { background: rgba(255,255,255,0.1); }
+        .custom-alert {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 1rem 1.5rem;
+            background: #22c55e;
+            color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 9000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.4s ease-in-out, visibility 0.4s ease-in-out;
+            font-weight: bold;
+        }
+        .custom-alert.error { background: #ef4444; }
+        .custom-alert.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            gap: 1rem;
+            z-index: 10000;
+            color: #fff;
+            font-size: 1.2rem;
+            display: none;
+        }
+        #loading-overlay .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            border-top: 4px solid #fbbf24;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* NEW: Premium Page Styles */
+        .premium-card {
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(10px);
+            border-radius: 1.5rem;
+            padding: 2rem;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+        .premium-card h1 {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 2.5rem;
+            color: #fbbf24;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            margin-bottom: 0.5rem;
+        }
+        .premium-card p.subtitle {
+            font-size: 1.1rem;
+            color: #ccc;
+            margin-bottom: 2rem;
+        }
+        .price-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .price-container .price {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #fff;
+        }
+        .price-container .currency {
+            font-size: 1.5rem;
+            color: #fbbf24;
+            align-self: flex-start;
+            margin-top: 0.5rem;
+        }
+        .features-list {
+            list-style: none;
+            padding: 0;
+            text-align: left;
+            margin: 2rem 0;
+        }
+        .features-list li {
+            font-size: 1rem;
+            color: #ddd;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .features-list li i {
+            color: #22c55e;
+            font-size: 1.2rem;
+        }
+
+        .payment-form {
+            text-align: center;
+            margin-top: 2rem;
+        }
+        .payment-form .mpesa-logo {
+            width: 150px;
+            margin-bottom: 1rem;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+        }
+        .payment-form p.instruction {
+            color: #ccc;
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+        }
+        .payment-form input {
+            width: 100%;
+            max-width: 300px;
+            padding: 0.8rem;
+            font-size: 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid #475569;
+            background: #1e293b;
+            color: #fff;
+            margin-bottom: 1rem;
+            box-sizing: border-box;
+            text-align: center;
+        }
+        .payment-form button {
+            width: 100%;
+            max-width: 300px;
+            padding: 1rem;
+            background: #22c55e;
+            color: #fff;
+            border: none;
+            border-radius: 1rem;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        .payment-form button:hover {
+            background: #16a34a;
+        }
+        .payment-form .disclaimer {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            margin-top: 1rem;
+        }
+        @media (max-width: 600px) {
+            .premium-card { padding: 1.5rem; }
+            .premium-card h1 { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <span>Processing Payment...</span>
+    </div>
+
+    <div class="custom-alert" id="customAlert"></div>
+
+    <div class="container">
+        <div class="navbar">
+            <div class="logo">
+                <i class="fa-solid fa-heart-circle-bolt"></i>
+                <span class="title">Campus Cupid</span>
+            </div>
+            <div class="menu">
+                <i class="fa-solid fa-bars" id="menuBtn"></i>
+                <div class="menu-content" id="menuContent">
+                    <a href="profile.html"><i class="fa-solid fa-user"></i> My Profile</a>
+                    <a href="feed.html"><i class="fa-solid fa-fire"></i> Feed</a>
+                    <a href="chat.html"><i class="fa-solid fa-comments"></i> Chat</a>
+                    <a href="notifications.html"><i class="fa-solid fa-bell"></i> Notifications</a>
+                    <button id="logoutBtn"><i class="fa-solid fa-sign-out-alt"></i> Logout</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="premium-card">
+            <h1>Go Premium!</h1>
+            <p class="subtitle">Unlock all the best features and find your perfect match faster.</p>
+            
+            <div class="price-container">
+                <span class="currency">Ksh</span>
+                <span class="price">500</span>
+                <span>/month</span>
+            </div>
+
+            <ul class="features-list">
+                <li><i class="fa-solid fa-circle-check"></i> See who likes you</li>
+                <li><i class="fa-solid fa-circle-check"></i> Unlimited messaging</li>
+                <li><i class="fa-solid fa-circle-check"></i> Get highlighted in search results</li>
+                <li><i class="fa-solid fa-circle-check"></i> Ad-free experience</li>
+                <li><i class="fa-solid fa-circle-check"></i> More precise matching filters</li>
+            </ul>
+
+            <div class="payment-form">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/M-PESA_logo.svg/1200px-M-PESA_logo.svg.png" alt="M-Pesa Logo" class="mpesa-logo">
+                <p class="instruction">Enter your M-Pesa phone number to complete the payment. You will receive a secure prompt on your phone.</p>
+                <input type="tel" id="phoneNumber" placeholder="e.g., 0712345678" pattern="^07[0-9]{8}$" required>
+                <button id="payBtn">Pay Now</button>
+                <p class="disclaimer">Payments are processed securely via M-Pesa. Your financial details are not stored on our servers.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = "https://vfbjwkfurleatfdrabdg.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmYmp3a2Z1cmxlYXRmZHJhYmRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MjAwNDIsImV4cCI6MjA3Mjk5NjA0Mn0.hguIfyynGc19tsSm9u66qy5IeUv40_mE8-JBjqnOQBE";
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const payBtn = document.getElementById('payBtn');
+        const phoneNumberInput = document.getElementById('phoneNumber');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const customAlert = document.getElementById('customAlert');
+
+        function showLoading() { loadingOverlay.style.display = 'flex'; }
+        function hideLoading() { loadingOverlay.style.display = 'none'; }
+        function showAlert(message, isError = false) {
+            customAlert.textContent = message;
+            customAlert.classList.remove('error');
+            if (isError) { customAlert.classList.add('error'); }
+            customAlert.classList.add('show');
+            setTimeout(() => { customAlert.classList.remove('show'); }, 3000);
+        }
+
+        document.getElementById("menuBtn").addEventListener("click", () => {
+            const menu = document.getElementById("menuContent");
+            menu.style.display = menu.style.display === "block" ? "none" : "block";
+        });
+
+        document.getElementById("logoutBtn").addEventListener("click", async () => {
+            await supabase.auth.signOut();
+            window.location.href = "index.html";
+        });
+        
+        async function checkSession() {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                window.location.href = "index.html";
+            } else {
+                const myProfileLink = document.querySelector('.menu-content a[href="profile.html"]');
+                if (myProfileLink) {
+                    myProfileLink.href = `profile.html?id=${user.id}`;
+                }
+            }
+        }
+
+        async function handlePayment() {
+            const phoneNumber = phoneNumberInput.value.trim();
+
+            if (!phoneNumber) {
+                showAlert("Please enter your M-Pesa phone number.", true);
+                return;
+            }
+
+            // Simple validation to check if it looks like a Kenyan number
+            if (!/^07\d{8}$/.test(phoneNumber)) {
+                showAlert("Invalid phone number format. Please use '07XXXXXXXX'.", true);
+                return;
+            }
+            
+            showLoading();
+            payBtn.disabled = true;
+            payBtn.textContent = "Processing...";
+
+            try {
+                // *** IMPORTANT: This is a SIMULATED payment flow. ***
+                // In a real application, you would send this data to a secure backend API.
+                // The backend would then call the M-Pesa Daraja API.
+
+                console.log(`Simulating payment for phone number: ${phoneNumber}`);
+                
+                // Simulate a delay for the STK Push
+                await new Promise(resolve => setTimeout(resolve, 3000));
+
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) {
+                    // Update the user's profile to reflect premium status
+                    const { error: profileError } = await supabase
+                        .from('profiles')
+                        .update({ is_premium: true })
+                        .eq('user_id', user.id);
+
+                    if (profileError) {
+                        throw new Error("Failed to update premium status in profile.");
+                    }
+                    
+                    // Add a record to the premium_memberships table
+                    const { error: membershipError } = await supabase
+                        .from('premium_memberships')
+                        .insert({
+                            user_id: user.id,
+                            start_date: new Date().toISOString(),
+                            // You would calculate the end_date based on the subscription period
+                            end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days from now
+                        });
+
+                    if (membershipError) {
+                        throw new Error("Failed to create premium membership record.");
+                    }
+
+                    showAlert("🎉 Payment Successful! You are now a Premium Member!");
+                    
+                    setTimeout(() => {
+                        window.location.href = "feed.html";
+                    }, 2000);
+                } else {
+                    throw new Error("User not found.");
+                }
+
+            } catch (error) {
+                showAlert("Payment failed. Please try again or contact support.", true);
+                console.error("Payment error:", error);
+            } finally {
+                hideLoading();
+                payBtn.disabled = false;
+                payBtn.textContent = "Pay Now";
+            }
+        }
+
+        payBtn.addEventListener('click', handlePayment);
+        checkSession();
+    </script>
+</body>
+</html>

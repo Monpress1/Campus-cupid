@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus Cupid ❤️ - Post Ad</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/compressorjs/dist/compressor.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Bebas+Neue&display=swap" rel="stylesheet">
+    <style>
+        /* Base Styles & Utilities */
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: linear-gradient(135deg, #0f172a, #1e293b, #334155);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1rem;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            padding: 2rem 1rem;
+        }
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            width: 100%;
+        }
+        .navbar .logo { display: flex; align-items: center; gap: 0.5rem; }
+        .navbar .logo i { font-size: 1.5rem; color: #ef4444; }
+        .navbar .logo .title {
+            font-family: 'Pacifico', cursive;
+            font-size: 1.8rem;
+            color: #fbbf24;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .navbar .menu { position: relative; }
+        .navbar i.fa-bars { font-size: 1.5rem; cursor: pointer; color: #fff; }
+        .menu-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 30px;
+            background: rgba(30,41,59,0.95);
+            border-radius: 0.5rem;
+            min-width: 180px;
+            padding: 0.5rem;
+            z-index: 100;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .menu-content a, .menu-content button {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            width: 100%;
+            padding: 0.7rem;
+            background: none;
+            border: none;
+            color: #fff;
+            text-align: left;
+            cursor: pointer;
+            border-radius: 0.4rem;
+            text-decoration: none;
+        }
+        .menu-content a:hover, .menu-content button:hover { background: rgba(255,255,255,0.1); }
+        
+        .custom-alert {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 1rem 1.5rem;
+            background: #22c55e;
+            color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 9000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.4s ease-in-out, visibility 0.4s ease-in-out;
+            font-weight: bold;
+        }
+        .custom-alert.error { background: #ef4444; }
+        .custom-alert.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            gap: 1rem;
+            z-index: 10000;
+            color: #fff;
+            font-size: 1.2rem;
+        }
+        #loading-overlay .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            border-top: 4px solid #fbbf24;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* NEW: Ad Post Page Styles */
+        .ad-form-card {
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(10px);
+            border-radius: 1.5rem;
+            padding: 2rem;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        .ad-form-card h1 {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 2.5rem;
+            color: #fbbf24;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+        .ad-form-card p.subtitle {
+            font-size: 1rem;
+            color: #ccc;
+            text-align: center;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .form-group label {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+            color: #fbbf24;
+        }
+        .form-group input,
+        .form-group textarea {
+            background: #1e293b;
+            border: 1px solid #475569;
+            border-radius: 0.5rem;
+            padding: 0.8rem;
+            color: #fff;
+            font-size: 1rem;
+            width: 95%;
+        }
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        .file-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        .file-input-wrapper label {
+            background: #475569;
+            color: #fff;
+            padding: 0.6rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: background 0.3s ease;
+        }
+        .file-input-wrapper label:hover { background: #334155; }
+
+        .ad-preview {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+        .ad-preview i { cursor: pointer; color: #ef4444; }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+        }
+        .form-actions button {
+            background: #fbbf24;
+            color: #0f172a;
+            padding: 0.8rem 2rem;
+            border: none;
+            border-radius: 1rem;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: background 0.3s ease;
+        }
+        .form-actions button:hover { background: #f59e0b; }
+
+        .premium-message {
+            background: rgba(255,255,255,0.1);
+            border: 2px dashed #fbbf24;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            text-align: center;
+            margin-top: 2rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .premium-message h2 {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 2rem;
+            color: #ef4444;
+            margin-bottom: 0.5rem;
+        }
+        .premium-message p {
+            font-size: 1.1rem;
+            color: #ccc;
+        }
+        .premium-message a {
+            display: inline-block;
+            margin-top: 1rem;
+            padding: 0.8rem 1.5rem;
+            background: #fbbf24;
+            color: #0f172a;
+            border-radius: 0.5rem;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background 0.3s ease;
+        }
+        .premium-message a:hover {
+            background: #f59e0b;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <span>Loading...</span>
+    </div>
+
+    <div class="custom-alert" id="customAlert"></div>
+
+    <div class="container">
+        <div class="navbar">
+            <div class="logo">
+                <i class="fa-solid fa-heart-circle-bolt"></i>
+                <span class="title">Campus Cupid</span>
+            </div>
+            <div class="menu">
+                <i class="fa-solid fa-bars" id="menuBtn"></i>
+                <div class="menu-content" id="menuContent">
+                    <a href="profile.html"><i class="fa-solid fa-user"></i> My Profile</a>
+                    <a href="feed.html"><i class="fa-solid fa-fire"></i> Feed</a>
+                    <a href="chat.html"><i class="fa-solid fa-comments"></i> Chat</a>
+                    <a href="notifications.html"><i class="fa-solid fa-bell"></i> Notifications</a>
+                    <a href="premium.html"><i class="fa-solid fa-gem"></i> Premium Membership</a>
+                    <button id="logoutBtn"><i class="fa-solid fa-sign-out-alt"></i> Logout</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="ad-content-wrapper">
+            <div class="ad-form-card" id="ad-form-card">
+                <h1>Post a Sponsored Ad</h1>
+                <p class="subtitle">Reach a wider audience by promoting your business, event, or product!</p>
+
+                <div class="form-group">
+                    <label for="ad-title">Ad Title</label>
+                    <input type="text" id="ad-title" placeholder="e.g., Campus Movie Night" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="ad-content">Ad Content</label>
+                    <textarea id="ad-content" placeholder="Tell us more about your ad..." required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="ad-url">Target URL (Optional)</label>
+                    <input type="url" id="ad-url" placeholder="e.g., https://yourwebsite.com">
+                </div>
+
+                <div class="form-group">
+                    <label>Ad Image (Optional)</label>
+                    <div class="file-input-wrapper">
+                        <input type="file" id="ad-image-upload" accept="image/*">
+                        <label for="ad-image-upload"><i class="fa-solid fa-camera"></i> Upload Image</label>
+                    </div>
+                    <div id="image-preview" class="ad-preview" style="display:none;">
+                        <span id="preview-file-name"></span> <i class="fa-solid fa-times-circle" id="remove-image"></i>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button id="submit-ad-btn">Post Ad</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="premium-message" class="premium-message" style="display: none;">
+            <h2>Premium Only Feature</h2>
+            <p>You must be a premium member to post a sponsored ad. Upgrade now to unlock this feature!</p>
+            <a href="premium.html">Upgrade to Premium</a>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = "https://vfbjwkfurleatfdrabdg.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmYmp3a2Z1cmxlYXRmZHJhYmRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MjAwNDIsImV4cCI6MjA3Mjk5NjA0Mn0.hguIfyynGc19tsSm9u66qy5IeUv40_mE8-JBjqnOQBE";
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // Corrected variable declarations to match HTML IDs
+        const adTitleInput = document.getElementById('ad-title');
+        const adContentInput = document.getElementById('ad-content');
+        const adUrlInput = document.getElementById('ad-url');
+        const adImageUploadInput = document.getElementById('ad-image-upload');
+        const submitAdBtn = document.getElementById('submit-ad-btn');
+        const imagePreviewDiv = document.getElementById('image-preview');
+        const previewFileNameSpan = document.getElementById('preview-file-name');
+        const removeImageBtn = document.getElementById('remove-image');
+        const adFormCard = document.getElementById('ad-form-card'); // Corrected
+        const premiumMessageDiv = document.getElementById('premium-message');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const customAlert = document.getElementById('customAlert');
+
+        let currentImageFile = null;
+
+        function showLoading() { loadingOverlay.style.display = 'flex'; }
+        function hideLoading() { loadingOverlay.style.display = 'none'; }
+        function showAlert(message, isError = false) {
+            customAlert.textContent = message;
+            customAlert.classList.remove('error');
+            if (isError) { customAlert.classList.add('error'); }
+            customAlert.classList.add('show');
+            setTimeout(() => { customAlert.classList.remove('show'); }, 3000);
+        }
+
+        // --- Menu & Auth Logic ---
+        document.getElementById("menuBtn").addEventListener("click", () => {
+            const menu = document.getElementById("menuContent");
+            menu.style.display = menu.style.display === "block" ? "none" : "block";
+        });
+        document.getElementById("logoutBtn").addEventListener("click", async () => {
+            await supabase.auth.signOut();
+            window.location.href = "index.html";
+        });
+
+        // --- Check Premium Status ---
+        async function checkPremiumStatusAndRender() {
+            showLoading();
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                window.location.href = "index.html";
+                return;
+            }
+
+            const { data: profile, error } = await supabase
+                .from('profiles')
+                .select('is_premium')
+                .eq('user_id', user.id)
+                .single();
+
+            if (error || !profile) {
+                console.error("Error fetching profile:", error);
+                showAlert("Failed to load profile. Please try again.", true);
+                hideLoading();
+                return;
+            }
+            
+            const myProfileLink = document.querySelector('.menu-content a[href="profile.html"]');
+            if (myProfileLink) {
+                myProfileLink.href = `profile.html?id=${user.id}`;
+            }
+
+            if (profile.is_premium) {
+                adFormCard.style.display = 'flex';
+                premiumMessageDiv.style.display = 'none';
+            } else {
+                adFormCard.style.display = 'none';
+                premiumMessageDiv.style.display = 'block';
+            }
+
+            hideLoading();
+        }
+
+        // --- Image Upload Preview & Removal ---
+        adImageUploadInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                currentImageFile = file;
+                previewFileNameSpan.textContent = file.name;
+                imagePreviewDiv.style.display = 'flex';
+            } else {
+                currentImageFile = null;
+                imagePreviewDiv.style.display = 'none';
+            }
+        });
+
+        removeImageBtn.addEventListener('click', () => {
+            currentImageFile = null;
+            adImageUploadInput.value = '';
+            imagePreviewDiv.style.display = 'none';
+        });
+
+        // --- Submit Ad Logic ---
+        submitAdBtn.addEventListener('click', async () => {
+            const title = adTitleInput.value.trim();
+            const content = adContentInput.value.trim();
+            const targetUrl = adUrlInput.value.trim();
+
+            if (!title || !content) {
+                showAlert("Ad Title and Content are required.", true);
+                return;
+            }
+
+            submitAdBtn.disabled = true;
+            submitAdBtn.textContent = "Posting...";
+            showLoading();
+
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                let imageUrl = null;
+
+                if (currentImageFile) {
+                    const fileExt = currentImageFile.name.split('.').pop();
+                    const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+                    const filePath = `ad_media/${fileName}`;
+
+                    // Compress image before upload
+                    const compressedImage = await new Promise((resolve, reject) => {
+                        new Compressor(currentImageFile, {
+                            quality: 0.6,
+                            maxWidth: 1000,
+                            maxHeight: 1000,
+                            success: resolve,
+                            error: reject,
+                        });
+                    });
+
+                    const { data: uploadData, error: uploadError } = await supabase.storage
+                        .from('ad_media')
+                        .upload(filePath, compressedImage, { upsert: false });
+                    
+                    if (uploadError) throw new Error("Image upload failed: " + uploadError.message);
+
+                    const { data: publicUrlData } = supabase.storage.from('ad_media').getPublicUrl(filePath);
+                    imageUrl = publicUrlData.publicUrl;
+                }
+
+                // Insert the new ad into the 'ads' table
+                const { error: adError } = await supabase.from('ads').insert({
+                    advertiser_id: user.id,
+                    title: title,
+                    content: content,
+                    image_url: imageUrl,
+                    target_url: targetUrl,
+                    is_active: true
+                });
+
+                if (adError) throw new Error("Failed to post ad: " + adError.message);
+
+                showAlert("Your ad has been posted successfully!");
+                // Clear the form
+                adTitleInput.value = '';
+                adContentInput.value = '';
+                adUrlInput.value = '';
+                removeImageBtn.click();
+                
+            } catch (error) {
+                console.error("Error posting ad:", error);
+                showAlert("Failed to post ad: " + error.message, true);
+            } finally {
+                submitAdBtn.disabled = false;
+                submitAdBtn.textContent = "Post Ad";
+                hideLoading();
+            }
+        });
+
+        // --- Initial Check ---
+        checkPremiumStatusAndRender();
+    </script>
+</body>
+</html>
