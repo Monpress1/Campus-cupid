@@ -4,43 +4,22 @@
   "description": "Connect with fellow students, find your community, and discover what's happening on campus.",
   "start_url": "/index.html",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#fbbf24",
+  "background_color": "#000000",
+  "theme_color": "#000000",
   "icons": [
     {
-      "src": "23.png",
-      "sizes": "72x72",
-      "type": "image/png"
-    },
-    {
-      "src": "23.png",
-      "sizes": "96x96",
-      "type": "image/png"
-    },
-    {
-      "src": "23.png",
-      "sizes": "128x128",
-      "type": "image/png"
-    },
-    {
-      "src": "23.png",
-      "sizes": "144x144",
-      "type": "image/png"
-    },
-  
-    {
-      "src": "23.png",
+      "src": "logo.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "23.png",
-      "sizes": "384x384",
+      "src": "logo.png",
+      "sizes": "512x512",
       "type": "image/png"
     },
     {
-      "src": "23.png",
-      "sizes": "512x512",
+      "src": "splash.png",
+      "sizes": "1024x1024",
       "type": "image/png"
     }
   ]
