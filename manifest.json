@@ -1,8 +1,8 @@
 {
   "name": "Campus Cupid",
-  "short_name": "Cupid",
+  "short_name": "CampusCupid",
   "description": "Connect with fellow students, find your community, and discover what's happening on campus.",
-  "start_url": "/index.html",
+  "start_url": "/feed.html",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#000000",
@@ -13,7 +13,7 @@
       "type": "image/png"
     },
     {
-      "src": "logo.png",
+      "src": "splash.png",
       "sizes": "512x512",
       "type": "image/png"
     },
