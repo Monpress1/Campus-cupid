@@ -4,8 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Campus Cupid ❤️</title>
+
+  <!-- ✅ PWA essentials -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#fbbf24">
+  <link rel="icon" href="/images/icons/icon-192x192.png">
+
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
   <style>
     body {
       margin: 0;
@@ -37,10 +44,7 @@
       font-size: 1.8rem;
       color: #fbbf24;
     }
-    h1 i {
-      margin-right: 8px;
-      color: #ef4444;
-    }
+    h1 i { margin-right: 8px; color: #ef4444; }
     input, select, button {
       width: 90%;
       padding: 0.8rem;
@@ -53,9 +57,7 @@
       background: rgba(255, 255, 255, 0.1);
       color: #fff;
     }
-    input::placeholder {
-      color: #bbb;
-    }
+    input::placeholder { color: #bbb; }
     button {
       background: #fbbf24;
       color: #000;
@@ -63,28 +65,13 @@
       cursor: pointer;
       transition: background 0.3s;
     }
-    button:hover {
-      background: #f59e0b;
-    }
-    .toggle {
-      text-align: center;
-      margin-top: 1rem;
-      cursor: pointer;
-      color: #93c5fd;
-    }
+    button:hover { background: #f59e0b; }
+    .toggle { text-align: center; margin-top: 1rem; cursor: pointer; color: #93c5fd; }
     .hidden { display: none; }
-    .row {
-      display: flex;
-      gap: 0.5rem;
-    }
-    .row select {
-      flex: 1;
-    }
+    .row { display: flex; gap: 0.5rem; }
+    .row select { flex: 1; }
     @media (max-width: 480px) {
-      .container {
-        margin: 1rem;
-        padding: 1.5rem;
-      }
+      .container { margin: 1rem; padding: 1.5rem; }
       h1 { font-size: 1.5rem; }
       .row { flex-direction: column; }
     }
@@ -188,7 +175,6 @@
       } else {
         const user = data.user;
         if (user) {
-          // ✅ Include gender and age in profile insert
           await supabase.from("profiles").insert([
             { 
               user_id: user.id, 
@@ -208,6 +194,16 @@
         toggleView.textContent = "Don’t have an account? Sign up";
       }
     });
+
+    /* ✅ Register the service worker for PWA */
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker
+          .register('/sw.js')
+          .then(() => console.log('Service Worker registered'))
+          .catch(err => console.error('SW registration failed', err));
+      });
+    }
   </script>
 </body>
 </html>
