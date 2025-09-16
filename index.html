@@ -70,6 +70,31 @@
     .hidden { display: none; }
     .row { display: flex; gap: 0.5rem; }
     .row select { flex: 1; }
+
+    /* Banner styling */
+    #installBanner {
+      display:none;
+      position:fixed;
+      bottom:0;
+      left:0;
+      right:0;
+      background:#222;
+      color:#fff;
+      padding:1em;
+      text-align:center;
+      z-index:1000;
+    }
+    #installBanner button {
+      margin-left:1em;
+      padding:0.5em 1em;
+      background:#fbbf24;
+      color:#000;
+      border:none;
+      border-radius:0.5rem;
+      font-weight:bold;
+      cursor:pointer;
+    }
+
     @media (max-width: 480px) {
       .container { margin: 1rem; padding: 1.5rem; }
       h1 { font-size: 1.5rem; }
@@ -111,6 +136,12 @@
     </form>
 
     <div class="toggle" id="toggle-view">Don’t have an account? Sign up</div>
+  </div>
+
+  <!-- ✅ Custom install banner -->
+  <div id="installBanner">
+    Install Campus Cupid for a better experience!
+    <button id="installBtn">Install</button>
   </div>
 
   <script>
@@ -169,22 +200,14 @@
       }
 
       const { data, error } = await supabase.auth.signUp({ email, password });
-
       if (error) {
         alert(error.message);
       } else {
         const user = data.user;
         if (user) {
           await supabase.from("profiles").insert([
-            { 
-              user_id: user.id, 
-              full_name: username, 
-              gender: gender,
-              age: age,
-              bio: "", 
-              interests: [], 
-              is_premium: false 
-            }
+            { user_id: user.id, full_name: username, gender: gender,
+              age: age, bio: "", interests: [], is_premium: false }
           ]);
         }
         alert("Signup successful! Please log in.");
@@ -204,6 +227,23 @@
           .catch(err => console.error('SW registration failed', err));
       });
     }
+
+    /* ✅ Custom install banner logic */
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      document.getElementById('installBanner').style.display = 'block';
+    });
+
+    document.getElementById('installBtn').addEventListener('click', () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.finally(() => {
+        deferredPrompt = null;
+        document.getElementById('installBanner').style.display = 'none';
+      });
+    });
   </script>
 </body>
 </html>
