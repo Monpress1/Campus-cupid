@@ -70,31 +70,6 @@
     .hidden { display: none; }
     .row { display: flex; gap: 0.5rem; }
     .row select { flex: 1; }
-
-    /* Banner styling */
-    #installBanner {
-      display:none;
-      position:fixed;
-      bottom:0;
-      left:0;
-      right:0;
-      background:#222;
-      color:#fff;
-      padding:1em;
-      text-align:center;
-      z-index:1000;
-    }
-    #installBanner button {
-      margin-left:1em;
-      padding:0.5em 1em;
-      background:#fbbf24;
-      color:#000;
-      border:none;
-      border-radius:0.5rem;
-      font-weight:bold;
-      cursor:pointer;
-    }
-
     @media (max-width: 480px) {
       .container { margin: 1rem; padding: 1.5rem; }
       h1 { font-size: 1.5rem; }
@@ -136,12 +111,6 @@
     </form>
 
     <div class="toggle" id="toggle-view">Don’t have an account? Sign up</div>
-  </div>
-
-  <!-- ✅ Custom install banner -->
-  <div id="installBanner">
-    Install Campus Cupid for a better experience!
-    <button id="installBtn">Install</button>
   </div>
 
   <script>
@@ -206,8 +175,15 @@
         const user = data.user;
         if (user) {
           await supabase.from("profiles").insert([
-            { user_id: user.id, full_name: username, gender: gender,
-              age: age, bio: "", interests: [], is_premium: false }
+            { 
+              user_id: user.id, 
+              full_name: username, 
+              gender: gender,
+              age: age,
+              bio: "", 
+              interests: [], 
+              is_premium: false 
+            }
           ]);
         }
         alert("Signup successful! Please log in.");
@@ -228,20 +204,34 @@
       });
     }
 
-    /* ✅ Custom install banner logic */
+    /* ✅ Custom install banner */
     let deferredPrompt;
     window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
+      e.preventDefault();       // stop mini-infobar
       deferredPrompt = e;
-      document.getElementById('installBanner').style.display = 'block';
-    });
 
-    document.getElementById('installBtn').addEventListener('click', () => {
-      if (!deferredPrompt) return;
-      deferredPrompt.prompt();
-      deferredPrompt.userChoice.finally(() => {
+      // create banner
+      const banner = document.createElement('div');
+      banner.innerHTML = `
+        <div style="
+          position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+          background:#fbbf24;color:#000;padding:1rem 1.5rem;border-radius:1rem;
+          box-shadow:0 4px 10px rgba(0,0,0,0.3);z-index:9999;
+          font-family:Segoe UI,Arial,sans-serif;">
+          Install Campus Cupid? 
+          <button id="installBtn" style="
+            margin-left:1rem;background:#fff;color:#000;border:none;
+            padding:0.4rem 0.8rem;border-radius:0.5rem;cursor:pointer;
+            font-weight:bold;">Install</button>
+        </div>`;
+      document.body.appendChild(banner);
+
+      document.getElementById('installBtn').addEventListener('click', async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        await deferredPrompt.userChoice;
         deferredPrompt = null;
-        document.getElementById('installBanner').style.display = 'none';
+        banner.remove();
       });
     });
   </script>
