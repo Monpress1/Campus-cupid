@@ -109,7 +109,7 @@
 
     <div class="toggle" id="toggle-view">Don’t have an account? Sign up</div>
     
-    <button id="pwa-install-button" hidden style="margin-top: 1rem;">Install App</button>
+    <button id="pwa-install-button" class="hidden" style="margin-top: 1rem;">Install App</button>
   </div>
 
   <script>
@@ -148,7 +148,6 @@
       const password = document.getElementById("login-password").value;
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
-        console.error("Login failed:", error.message);
         alert(error.message);
       } else {
         window.location.href = "profile.html";
@@ -172,7 +171,6 @@
 
       const { data, error } = await supabase.auth.signUp({ email, password });
       if (error) {
-        console.error("Signup failed:", error.message);
         alert(error.message);
       } else {
         const user = data.user;
@@ -202,44 +200,34 @@
       window.addEventListener('load', () => {
         navigator.serviceWorker
           .register('/sw.js')
-          .then(reg => {
-            console.log('Service Worker registered!');
+          .then(() => {
+            console.log('Service Worker registered');
           })
           .catch(err => {
-            console.error('Service Worker registration failed: ', err);
+            console.error('SW registration failed', err);
           });
       });
     }
 
-    // ✅ PWA install logic with a more reliable approach
+    // ✅ PWA install logic with the correct fix
     window.addEventListener('beforeinstallprompt', (e) => {
-      console.log('beforeinstallprompt event fired!');
-      e.preventDefault();
+      // Crucial fix: prevent the default browser prompt
+      e.preventDefault();       
       deferredPrompt = e;
-      pwaInstallButton.hidden = false;
+      pwaInstallButton.classList.remove('hidden'); // Show your custom button
+      console.log('PWA Install button is now visible.');
     });
 
     pwaInstallButton.addEventListener('click', async () => {
-      console.log('Install button clicked!');
       if (!deferredPrompt) {
-        console.error('Deferred prompt is null. The prompt can only be used once or is not available.');
-        return;
+        console.warn('Prompt is not available.');
+        return; 
       }
-
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
       console.log(`User response to the install prompt: ${outcome}`);
-
-      // The prompt can only be used once, so we hide the button
       deferredPrompt = null;
-      pwaInstallButton.hidden = true;
-    });
-
-    // ✅ Listen for the appinstalled event to hide the button after successful installation
-    window.addEventListener('appinstalled', () => {
-      console.log('PWA was installed successfully!');
-      pwaInstallButton.hidden = true;
-      // You can add logic here, e.g., redirect the user or show a thank you message
+      pwaInstallButton.classList.add('hidden'); // Hide the button after use
     });
   </script>
 </body>
