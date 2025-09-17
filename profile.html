@@ -486,6 +486,7 @@ button#cancelBtn:hover { background: #334155; }
 
 <button id="floatingChatBtn"><i class="fa-solid fa-comments"></i></button>
 
+
 <script>
 const SUPABASE_URL = "https://vfbjwkfurleatfdrabdg.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmYmp3a2Z1cmxlYXRmZHJhYmRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MjAwNDIsImV4cCI6MjA3Mjk5NjA0Mn0.hguIfyynGc19tsSm9u66qy5IeUv40_mE8-JBjqnOQBE";
@@ -532,6 +533,10 @@ const friendsListModal = document.getElementById("friendsListModal");
 const friendsListContainer = document.getElementById("friendsList");
 const closeFriendsModalBtn = document.getElementById("closeFriendsModal");
 
+const saveBtn = document.getElementById("saveBtn");
+const cancelBtn = document.getElementById("cancelBtn");
+const profileStats = document.getElementById("profile-stats");
+
 const interestIcons = {
   "coding": "fa-solid fa-code",
   "reading": "fa-solid fa-book",
@@ -544,6 +549,7 @@ const interestIcons = {
 
 let profileIdToLoad;
 let currentUserId;
+let isProfileComplete = false;
 
 // Function to show custom message box
 function showMessage(message) {
@@ -568,14 +574,14 @@ window.addEventListener("click", (e) => {
   if (menu.style.display === "block" && !menu.contains(e.target) && e.target !== menuBtn) {
     menu.style.display = "none";
   }
-});  
+});
 
 // Edit Profile toggle
 document.getElementById("editProfileMenuBtn").addEventListener("click", () => {
   toggleEditView(true);
 });
 
-document.getElementById("cancelBtn").addEventListener("click", () => {
+cancelBtn.addEventListener("click", () => {
   toggleEditView(false);
   loadProfile();
 });
@@ -600,10 +606,12 @@ function toggleEditView(isEditing) {
     viewProfile.style.display = "none";
     editProfile.style.display = "flex";
     uploadLabel.style.display = "flex";
+    profileStats.style.display = "none";
   } else {
     viewProfile.style.display = "flex";
     editProfile.style.display = "none";
     uploadLabel.style.display = "none";
+    profileStats.style.display = "flex";
   }
 }
 
@@ -644,7 +652,9 @@ async function loadProfile() {
   profileIdToLoad = urlParams.get('id') || user.id;
 
   const editProfileMenuBtn = document.getElementById("editProfileMenuBtn");
-  if (profileIdToLoad === user.id) {
+  const isViewingOwnProfile = profileIdToLoad === user.id;
+
+  if (isViewingOwnProfile) {
     editProfileMenuBtn.style.display = 'block';
     addFriendBtn.style.display = 'none';
     unfriendBtn.style.display = 'none';
@@ -680,8 +690,20 @@ async function loadProfile() {
     }
   }
 
+  // Check if profile is complete
+  if (isViewingOwnProfile && (!profileData.full_name || !profileData.age || !profileData.gender)) {
+    isProfileComplete = false;
+    showMessage("Please complete your profile to continue!");
+    toggleEditView(true);
+    // Hide cancel button if profile is incomplete
+    cancelBtn.style.display = 'none';
+  } else {
+    isProfileComplete = true;
+    cancelBtn.style.display = 'block';
+  }
+
   viewFullNameEl.textContent = profileData.full_name || "New User";
-  if (profileIdToLoad === user.id) {
+  if (isViewingOwnProfile) {
     viewEmailEl.textContent = user.email || "No email available";
   } else {
     viewEmailEl.textContent = "";
@@ -692,7 +714,7 @@ async function loadProfile() {
     .select('*', { count: 'exact', head: true })
     .eq('author_id', profileIdToLoad);
   document.getElementById("posts-count").textContent = postsCount || 0;
-  
+
   // Update friends count based on accepted requests
   const { count: friendsCount } = await supabase
     .from('friend_requests')
@@ -707,7 +729,7 @@ async function loadProfile() {
     .select('*', { count: 'exact', head: true })
     .eq('liked_profile_id', profileIdToLoad);
   likesCountEl.textContent = likesCount || 0;
-  
+
   viewGenderEl.innerHTML = profileData.gender ? `<i class="fa-solid fa-${profileData.gender === 'male' ? 'mars' : profileData.gender === 'female' ? 'venus' : 'genderless'}"></i> ${profileData.gender.charAt(0).toUpperCase() + profileData.gender.slice(1)}` : "N/A";
   viewAgeEl.innerHTML = profileData.age ? `<i class="fa-solid fa-cake-candles"></i> ${profileData.age}` : "N/A";
   viewBioEl.textContent = profileData.bio || "No bio yet.";
@@ -739,14 +761,14 @@ async function loadProfile() {
     imgEl.className = "profile-pic";
     imgEl.src = profileData.avatar_url;
     imgEl.alt = "Profile Picture";
-    
+
     imgEl.onload = () => {
         profileImageContainer.appendChild(imgEl);
     };
     imgEl.onerror = () => {
         profileImageContainer.innerHTML = `<div class="user-icon"><i class="fa-solid fa-user"></i></div>`;
     };
-    
+
     imgEl.style.cursor = "pointer";
     imgEl.addEventListener("click", () => {
       modalImage.src = imgEl.src;
@@ -774,7 +796,7 @@ async function updateFriendButton(profileIdToLoad, currentUserId) {
         .or(`sender_id.eq.${profileIdToLoad},receiver_id.eq.${currentUserId}`)
         .limit(1)
         .single();
-    
+
     if (error && error.code !== "PGRST116") {
         console.error("Error checking friend status:", error.message);
         return;
@@ -814,7 +836,7 @@ async function updateFriendButton(profileIdToLoad, currentUserId) {
 }
 
 
-document.getElementById("saveBtn").addEventListener("click", async () => {
+saveBtn.addEventListener("click", async () => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) { return showMessage("No user found."); }
 
@@ -830,13 +852,18 @@ document.getElementById("saveBtn").addEventListener("click", async () => {
     interests: selectedInterests
   };
 
+  if (!updates.full_name || !updates.gender || !updates.age) {
+    return showMessage("Please fill in your full name, gender, and age.");
+  }
+
   const { error } = await supabase.from("profiles").update(updates).eq("user_id", user.id);
   if (error) {
     showMessage("Save failed: " + error.message);
   } else {
     showMessage("Profile updated successfully!");
+    isProfileComplete = true;
+    toggleEditView(false);
     loadProfile();
-    toggleEditView(false); // Add this line to revert to view mode
   }
 });
 
@@ -858,27 +885,27 @@ profileUploadEl.addEventListener("change", (e) => {
         uploadLabel.style.display = "flex";
         return;
       }
-      
+
       const fileExt = compressedFile.name.split(".").pop();
       const fileName = `${user.id}.${fileExt}`;
       const filePath = `${user.id}/${fileName}`;
-    
+
       const { error: uploadError } = await supabase.storage.from("avatars").upload(filePath, compressedFile, { upsert: true });
 
       if (uploadError) {
         uploadStatusEl.textContent = "Image upload failed: " + uploadError.message;
       } else {
         const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(filePath);
-        
+
         const newPublicUrl = `${publicUrl}?t=${new Date().getTime()}`;
 
         const { error: updateErr } = await supabase.from("profiles").update({ avatar_url: newPublicUrl }).eq("user_id", user.id);
-        
+
         if (updateErr) {
           uploadStatusEl.textContent = "Failed to save avatar: " + updateErr.message;
         } else {
           profileImageContainer.innerHTML = `<img id="profileImage" class="profile-pic" src="${newPublicUrl}" alt="Profile Picture">`;
-          
+
           const newImgEl = profileImageContainer.querySelector("#profileImage");
           newImgEl.style.cursor = "pointer";
           newImgEl.addEventListener("click", () => {
@@ -908,7 +935,7 @@ loveBtn.addEventListener("click", async () => {
   if (!user) {
     return showMessage("Please log in to love a profile.");
   }
-  
+
   const urlParams = new URLSearchParams(window.location.search);
   const likedProfileId = urlParams.get('id');
 
@@ -944,6 +971,10 @@ unfriendBtn.addEventListener("click", async () => {
 });
 
 floatingChatBtn.addEventListener("click", () => {
+    if (!isProfileComplete) {
+        showMessage("Please complete your profile first.");
+        return;
+    }
     window.location.href = `chat.html?user_id=${profileIdToLoad}`;
 });
 
@@ -999,7 +1030,7 @@ async function fetchAndDisplayFriends(profileId) {
         friendProfiles.forEach(profile => {
             const isFriend = currentUsersFriends.has(profile.user_id);
             const isSelf = profile.user_id === currentUserId;
-            
+
             let buttonHtml = '';
             if (!isSelf) {
                 const buttonText = isFriend ? "Unfriend" : "Add Friend";
@@ -1009,7 +1040,7 @@ async function fetchAndDisplayFriends(profileId) {
 
             const friendItem = document.createElement("div");
             friendItem.className = "friend-item";
-            
+
             let avatarHtml;
             if (profile.avatar_url) {
                 avatarHtml = `<img src="${profile.avatar_url}" alt="${profile.full_name}">`;
@@ -1024,7 +1055,7 @@ async function fetchAndDisplayFriends(profileId) {
                 </div>
                 ${buttonHtml}
             `;
-            
+
             friendsListContainer.appendChild(friendItem);
         });
     }
@@ -1059,7 +1090,7 @@ async function fetchCurrentUsersFriends(userId) {
         .select(`sender_id, receiver_id`)
         .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
         .eq('status', 'accepted');
-    
+
     if (error) {
         console.error("Error fetching current user's friends:", error.message);
         return new Set();
@@ -1079,7 +1110,7 @@ async function handleFriendAction(userId, action) {
             .from('friend_requests')
             .delete()
             .or(`and(sender_id.eq.${currentUserId},receiver_id.eq.${userId}),and(sender_id.eq.${userId},receiver_id.eq.${currentUserId})`);
-        
+
         if (error) {
             showMessage("Failed to unfriend: " + error.message);
         } else {
@@ -1094,7 +1125,7 @@ async function handleFriendAction(userId, action) {
             .or(`sender_id.eq.${userId},receiver_id.eq.${currentUserId}`)
             .limit(1)
             .single();
-        
+
         if (checkError && checkError.code !== "PGRST116") {
             return showMessage("Error checking for existing request: " + checkError.message);
         }
@@ -1120,7 +1151,7 @@ async function handleFriendAction(userId, action) {
             const { error: insertError } = await supabase
                 .from('friend_requests')
                 .insert({ sender_id: currentUserId, receiver_id: userId });
-            
+
             if (insertError) {
                 return showMessage("Failed to send request: " + insertError.message);
             }
@@ -1139,15 +1170,42 @@ async function handleFriendAction(userId, action) {
                 message: message,
                 related_id: currentUserId
             });
-            
+
             showMessage("Friend request sent!");
         }
     }
     loadProfile();
 }
 
+// 1. New function to check profile completion and handle redirection
+async function checkProfileAndRedirect(url) {
+    if (isProfileComplete) {
+        window.location.href = url;
+    } else {
+        showMessage("Please complete your profile before navigating.");
+    }
+}
+
+// 2. Add event listeners to all navigation links/buttons
+// Find all links in the menu
+document.querySelectorAll('#menuContent a').forEach(link => {
+    link.addEventListener('click', (e) => {
+        // Prevent default link behavior
+        e.preventDefault();
+        // Check profile and redirect
+        checkProfileAndRedirect(e.currentTarget.href);
+    });
+});
+
+// 3. Add event listener to the floating chat button
+floatingChatBtn.addEventListener("click", () => {
+    // Check profile and redirect
+    checkProfileAndRedirect(`chat.html?user_id=${profileIdToLoad}`);
+});
+
 loadProfile();
 </script>
+
 </body>
 </html>
 </html>
