@@ -182,29 +182,6 @@
             text-align: center;
             margin-top: 2rem;
         }
-        .payment-form .mpesa-logo {
-            width: 150px;
-            margin-bottom: 1rem;
-            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
-        }
-        .payment-form p.instruction {
-            color: #ccc;
-            font-size: 0.9rem;
-            margin-bottom: 1.5rem;
-        }
-        .payment-form input {
-            width: 100%;
-            max-width: 300px;
-            padding: 0.8rem;
-            font-size: 1rem;
-            border-radius: 0.5rem;
-            border: 1px solid #475569;
-            background: #1e293b;
-            color: #fff;
-            margin-bottom: 1rem;
-            box-sizing: border-box;
-            text-align: center;
-        }
         .payment-form button {
             width: 100%;
             max-width: 300px;
@@ -225,6 +202,30 @@
             font-size: 0.8rem;
             color: #94a3b8;
             margin-top: 1rem;
+        }
+        /* NEW: Premium Activated Styles */
+        .premium-activated {
+            text-align: center;
+            padding: 2rem;
+            color: #22c55e;
+        }
+        .premium-activated h2 {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 2.5rem;
+            margin-top: 0;
+            margin-bottom: 1rem;
+            letter-spacing: 2px;
+        }
+        .premium-activated .icon-container {
+            font-size: 4rem;
+            color: #fbbf24;
+            margin-bottom: 1.5rem;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
         }
         @media (max-width: 600px) {
             .premium-card { padding: 1.5rem; }
@@ -264,7 +265,7 @@
             
             <div class="price-container">
                 <span class="currency">Ksh</span>
-                <span class="price">500</span>
+                <span class="price">300</span>
                 <span>/month</span>
             </div>
 
@@ -276,25 +277,29 @@
                 <li><i class="fa-solid fa-circle-check"></i> More precise matching filters</li>
             </ul>
 
-            <div class="payment-form">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/M-PESA_logo.svg/1200px-M-PESA_logo.svg.png" alt="M-Pesa Logo" class="mpesa-logo">
-                <p class="instruction">Enter your M-Pesa phone number to complete the payment. You will receive a secure prompt on your phone.</p>
-                <input type="tel" id="phoneNumber" placeholder="e.g., 0712345678" pattern="^07[0-9]{8}$" required>
-                <button id="payBtn">Pay Now</button>
-                <p class="disclaimer">Payments are processed securely via M-Pesa. Your financial details are not stored on our servers.</p>
+            <div id="premium-content">
+                <div class="payment-form">
+                    <button id="payBtn">Pay Now</button>
+                    <p class="disclaimer">Payments are processed securely via Paystack. Your financial details are not stored on our servers.</p>
+                </div>
             </div>
         </div>
     </div>
 
+    <script src="https://js.paystack.co/v1/inline.js"></script>
     <script>
         const SUPABASE_URL = "https://vfbjwkfurleatfdrabdg.supabase.co";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmYmp3a2Z1cmxlYXRmZHJhYmRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MjAwNDIsImV4cCI6MjA3Mjk5NjA0Mn0.hguIfyynGc19tsSm9u66qy5IeUv40_mE8-JBjqnOQBE";
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         const payBtn = document.getElementById('payBtn');
-        const phoneNumberInput = document.getElementById('phoneNumber');
         const loadingOverlay = document.getElementById('loading-overlay');
         const customAlert = document.getElementById('customAlert');
+        const premiumContentDiv = document.getElementById('premium-content');
+        
+        // Your Live Paystack Public API Key
+        // REPLACE THIS WITH YOUR OWN LIVE PUBLIC KEY!
+        const PAYSTACK_PUBLIC_KEY = 'pk_live_d425d16ee8cebccd2fd132fe4dae2cbf0ee5a579';
 
         function showLoading() { loadingOverlay.style.display = 'flex'; }
         function hideLoading() { loadingOverlay.style.display = 'none'; }
@@ -316,84 +321,123 @@
             window.location.href = "index.html";
         });
         
-        async function checkSession() {
+        async function checkSessionAndPremiumStatus() {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) {
                 window.location.href = "index.html";
+                return;
             } else {
                 const myProfileLink = document.querySelector('.menu-content a[href="profile.html"]');
                 if (myProfileLink) {
                     myProfileLink.href = `profile.html?id=${user.id}`;
                 }
+
+                // Check for premium status from the profiles table
+                const { data: profile, error } = await supabase
+                    .from('profiles')
+                    .select('is_premium')
+                    .eq('user_id', user.id)
+                    .single();
+                
+                if (error) {
+                    console.error('Error fetching profile:', error);
+                    showAlert('Could not load premium status.', true);
+                }
+
+                if (profile && profile.is_premium) {
+                    showPremiumActivated();
+                } else {
+                    // Show the payment form if not premium
+                    const paymentForm = document.querySelector('.payment-form');
+                    if (paymentForm) paymentForm.style.display = 'block';
+                }
             }
+        }
+        
+        function showPremiumActivated() {
+            premiumContentDiv.innerHTML = `
+                <div class="premium-activated">
+                    <div class="icon-container">
+                        <i class="fa-solid fa-crown"></i>
+                    </div>
+                    <h2>Premium Activated!</h2>
+                    <p>You have unlocked all premium features.</p>
+                </div>
+            `;
         }
 
         async function handlePayment() {
-            const phoneNumber = phoneNumberInput.value.trim();
-
-            if (!phoneNumber) {
-                showAlert("Please enter your M-Pesa phone number.", true);
-                return;
-            }
-
-            // Simple validation to check if it looks like a Kenyan number
-            if (!/^07\d{8}$/.test(phoneNumber)) {
-                showAlert("Invalid phone number format. Please use '07XXXXXXXX'.", true);
-                return;
-            }
-            
             showLoading();
             payBtn.disabled = true;
             payBtn.textContent = "Processing...";
 
-            try {
-                // *** IMPORTANT: This is a SIMULATED payment flow. ***
-                // In a real application, you would send this data to a secure backend API.
-                // The backend would then call the M-Pesa Daraja API.
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                showAlert("User session expired. Please log in again.", true);
+                hideLoading();
+                payBtn.disabled = false;
+                payBtn.textContent = "Pay Now";
+                return;
+            }
 
-                console.log(`Simulating payment for phone number: ${phoneNumber}`);
+            // *** This is the Paystack payment initiation ***
+            const handler = PaystackPop.setup({
+                key: PAYSTACK_PUBLIC_KEY, 
+                email: user.email,
+                amount: 30000, // KES 300.00 (in cents)
+                currency: 'KES', 
+                reference: '' + Math.floor((Math.random() * 1000000000) + 1), 
                 
-                // Simulate a delay for the STK Push
-                await new Promise(resolve => setTimeout(resolve, 3000));
-
-                const { data: { user } } = await supabase.auth.getUser();
-                if (user) {
-                    // Update the user's profile to reflect premium status
-                    const { error: profileError } = await supabase
-                        .from('profiles')
-                        .update({ is_premium: true })
-                        .eq('user_id', user.id);
-
-                    if (profileError) {
-                        throw new Error("Failed to update premium status in profile.");
-                    }
+                callback: function(response) {
+                    // This function runs on successful payment.
+                    // IMPORTANT: You MUST verify this transaction on your backend (Supabase Function/Edge Function).
+                    // This frontend logic is for user experience only.
                     
-                    // Add a record to the premium_memberships table
-                    const { error: membershipError } = await supabase
-                        .from('premium_memberships')
-                        .insert({
-                            user_id: user.id,
-                            start_date: new Date().toISOString(),
-                            // You would calculate the end_date based on the subscription period
-                            end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days from now
-                        });
-
-                    if (membershipError) {
-                        throw new Error("Failed to create premium membership record.");
-                    }
-
-                    showAlert("🎉 Payment Successful! You are now a Premium Member!");
+                    const reference = response.reference;
+                    console.log(`Payment successful. Reference: ${reference}`);
+                    showAlert("🎉 Payment Successful! Verifying...", false);
                     
-                    setTimeout(() => {
-                        window.location.href = "feed.html";
-                    }, 2000);
-                } else {
-                    throw new Error("User not found.");
+                    // Call the function to update the user's status in Supabase
+                    updatePremiumStatus(user.id);
+                },
+                
+                onClose: function() {
+                    showAlert('Payment window closed. Please try again.', true);
+                    hideLoading();
+                    payBtn.disabled = false;
+                    payBtn.textContent = "Pay Now";
                 }
+            });
+            handler.openIframe();
+        }
+
+        async function updatePremiumStatus(userId) {
+            try {
+                const { error } = await supabase
+                    .from('profiles')
+                    .update({ is_premium: true })
+                    .eq('user_id', userId);
+
+                if (error) throw new Error("Supabase profile update failed.");
+
+                const { error: membershipError } = await supabase
+                    .from('premium_memberships')
+                    .insert({
+                        user_id: userId,
+                        start_date: new Date().toISOString(),
+                        end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+                    });
+
+                if (membershipError) throw new Error("Supabase membership record failed.");
+
+                showAlert("You are now a Premium Member!");
+                setTimeout(() => {
+                    window.location.href = "feed.html";
+                }, 2000);
 
             } catch (error) {
-                showAlert("Payment failed. Please try again or contact support.", true);
-                console.error("Payment error:", error);
+                console.error('Error updating premium status:', error);
+                showAlert("Failed to activate premium status. Contact support.", true);
             } finally {
                 hideLoading();
                 payBtn.disabled = false;
@@ -402,7 +446,7 @@
         }
 
         payBtn.addEventListener('click', handlePayment);
-        checkSession();
+        checkSessionAndPremiumStatus();
     </script>
 </body>
 </html>
