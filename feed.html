@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -59,28 +58,28 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* Custom Alert */
-        .custom-alert {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 1rem 1.5rem;
-            background: #22c55e;
-            color: white;
-            border-radius: 0.5rem;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            z-index: 9000;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.4s ease-in-out, visibility 0.4s ease-in-out;
-            font-weight: bold;
-        }
-        .custom-alert.error { background: #ef4444; }
-        .custom-alert.show {
-            opacity: 1;
-            visibility: visible;
-        }
+       #customAlert {
+    position: fixed;
+    bottom: 20px; /* Or top: 20px, as in the previous example */
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #333;
+    color: #fff;
+    padding: 15px 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+    z-index: 9999; /* This is the key change */
+}
+
+#customAlert.show {
+    opacity: 1;
+}
+
+#customAlert.error {
+    background-color: #e53e3e;
+}
 
         .container { width: 100%; max-width: 600px; }
         .navbar {
@@ -155,13 +154,10 @@
           pointer-events: none;
           display: none;
         }
-
         .notification-icon-wrapper {
             position: relative;
-            margin-right: 1.5rem;
             cursor: pointer;
         }
-
         .notification-icon-wrapper .badge {
             position: absolute;
             top: -5px;
@@ -492,26 +488,26 @@
             border-bottom: none;
         }
 
-        /* Floating Post Button */
-        #floatingPostBtn {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            width: 60px;
-            height: 60px;
-            background: #fbbf24;
-            color: #0f172a;
-            border: none;
-            border-radius: 50%;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            cursor: pointer;
-            z-index: 20000;
-            transition: background 0.3s, box-shadow 0.3s;
-        }
+     #floatingPostBtn {
+    position: fixed;
+    bottom: 95.0px !important; /* Add !important here */
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    background: #fbbf24;
+    color: #0f172a;
+    border: none;
+    border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    cursor: pointer;
+    z-index: 20000;
+    transition: background 0.3s, box-shadow 0.3s;
+}
+
         #floatingPostBtn:hover {
             background: #f59e0b;
             box-shadow: 0 8px 24px rgba(0,0,0,0.3);
@@ -553,54 +549,6 @@
             #postModal { padding: 1.2rem 0.5rem; }
         }
 
-    @keyframes cardSlide {
-        0% { transform: translateX(0); }
-        100% { transform: translateX(-100%); }
-    }
-    .suggestion-container {
-        overflow-x: auto;
-        overflow-y: hidden;
-        white-space: nowrap;
-        padding: 1rem 0;
-        -webkit-overflow-scrolling: touch;
-    }
-    .suggestion-scroll {
-        display: inline-flex;
-        animation: cardSlide 40s linear infinite;
-    }
-    .suggestion-scroll:hover {
-        animation-play-state: paused;
-    }
-    .ad-card {
-        background: linear-gradient(135deg, #fbbf24, #f59e0b);
-        border-radius: 1rem;
-        padding: 1.5rem;
-        color: #1e293b;
-        position: relative;
-        overflow: hidden;
-    }
-    .ad-label {
-        position: absolute;
-        top: 0.5rem;
-        right: 0.5rem;
-        background: rgba(255,255,255,0.3);
-        padding: 0.2rem 0.5rem;
-        border-radius: 0.5rem;
-        font-size: 0.8rem;
-    }
-    .ad-link {
-        display: inline-block;
-        background: #fff;
-        color: #f59e0b;
-        padding: 0.5rem 1rem;
-        border-radius: 0.5rem;
-        text-decoration: none;
-        margin-top: 1rem;
-        transition: transform 0.2s;
-    }
-    .ad-link:hover {
-        transform: translateY(-2px);
-    }
     /* Floating Love Emoji Animation */
     @keyframes floatUp {
         0% {
@@ -624,6 +572,89 @@
         z-index: 50;
         text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
     }
+    .premium-badge {
+        color: #FFD700;
+        font-size: 1.5rem;
+        cursor: pointer;
+        margin-right: 1.5rem;
+    }
+    .free-badge {
+        color: #A9A9A9;
+        font-size: 1.5rem;
+        cursor: pointer;
+        margin-right: 1.5rem;
+    }
+    /* New search section styles */
+    .search-section {
+        background: rgba(255,255,255,0.08);
+        backdrop-filter: blur(10px);
+        border-radius: 1.5rem;
+        padding: 1rem;
+        margin-bottom: 2rem;
+        width: 100%;
+        box-sizing: border-box;
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .search-section .user-avatar-small {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #fbbf24;
+        cursor: pointer;
+    }
+    .search-section .search-input {
+        flex-grow: 1;
+        background: #1e293b;
+        border: 1px solid #475569;
+        border-radius: 1rem;
+        padding: 0.8rem 1rem;
+        color: #fff;
+        font-size: 1rem;
+        max-width:170px;
+    }
+    .search-section .search-btn {
+        background: #fbbf24;
+        color: #0f172a;
+        padding: 0.8rem 1rem;
+        border: none;
+        border-radius: 1rem;
+        cursor: pointer;
+        font-weight: bold;
+        margin-left:;
+        transition: background 0.3s ease;
+    }
+    .search-section .search-btn:hover {
+        background: #f59e0b;
+    }
+
+    /* People You May Know - Glide Motion Container */
+    .suggested-friends-container {
+        overflow: hidden;
+        padding-bottom: 1.5rem;
+    }
+    .suggested-friends-wrapper {
+        display: flex;
+        gap: 1rem;
+        transition: transform 0.5s ease-in-out;
+        will-change: transform;
+    }
+    .suggested-friends-item {
+        flex-shrink: 0;
+        width: 90px;
+        cursor: pointer;
+        background: rgba(255,255,255,0.08);
+        border-radius: 1rem;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        text-align: center;
+    }
     </style>
 </head>
 <body>
@@ -632,8 +663,7 @@
         <span>Loading...</span>
     </div>
 
-    <div class="custom-alert" id="customAlert"></div>
-
+    
     <button id="floatingPostBtn" title="Create Post"><i class="fa-solid fa-plus"></i></button>
     <div id="postModalOverlay">
       <div id="postModal">
@@ -661,8 +691,11 @@
                 <span class="title">Campus Cupid</span>
             </div>
             <div class="navbar-right-icons" style="display: flex; align-items: center; gap: 1rem;">
+                <a href="premium.html" id="premiumBadgeLink" title="Go Premium">
+                    <i class="fa-solid fa-gem free-badge" id="premiumBadge"></i>
+                </a>
                 <div class="notification-icon-wrapper" id="notificationIconWrapper">
-               <a href="notifications.html"><i class="fa-solid fa-bell" style="font-size: 1.5rem; color: #fff;"></i></a>
+                   <a href="notifications.html"><i class="fa-solid fa-bell" style="font-size: 1.5rem; color: #fff;"></i></a>
                     <span class="badge" id="notificationBadge">0</span>
                 </div>
                 <div class="menu">
@@ -672,7 +705,7 @@
                         <a href="chat.html"><i class="fa-solid fa-comments"></i> Chat</a>
                         <a href="notifications.html" class="menu-item-with-badge">
                             <i class="fa-solid fa-bell"></i> Notifications
-                            <span class="badge" id="notificationBadge">0</span>
+                            <span class="badge" id="notificationBadgeMenu">0</span>
                         </a>
                         <a href="create_ad.html"><i class="fa-solid fa-bullhorn"></i> Post an Ad</a>
                         <a href="premium.html"><i class="fa-solid fa-gem"></i> Premium Membership</a>
@@ -681,7 +714,23 @@
                 </div>
             </div>
         </div><br>
-        <div id="suggestedFriendsBar" style="margin-bottom:1.5rem;"></div>
+        
+        <div id="suggestedFriendsSection">
+          <span style="color:#fbbf24; font-size:small; font-weight:bold;">People You May Know:</span>
+          <div id="suggestedFriendsContainer" class="suggested-friends-container">
+            <div id="suggestedFriendsWrapper" class="suggested-friends-wrapper">
+              </div>
+          </div>
+        </div>
+        
+        <div class="search-section">
+            <a href="profile.html" id="myProfileLink">
+                <img id="myProfileAvatar" class="user-avatar-small" src="https://via.placeholder.com/40" alt="My Profile">
+            </a>
+            <input type="text" id="searchInput" class="search-input" placeholder="Search for users, posts, or comments...">
+            <button id="searchBtn" class="search-btn"><i class="fa-solid fa-search"></i></button>
+        </div>
+
         <div id="feed" class="feed">
             <div class="placeholder-card"></div>
             <div class="placeholder-card" style="height: 180px;"></div>
@@ -704,9 +753,10 @@
                 </div>
         </div>
     </div>
+    <div class="custom-alert" id="customAlert"></div>
 
     <script>
-      // --- Supabase and Element Initialization ---
+// --- Supabase and Element Initialization ---
 const SUPABASE_URL = "https://vfbjwkfurleatfdrabdg.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmYmp3a2Z1cmxlYXRmZHJhYmRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MjAwNDIsImV4cCI6MjA3Mjk5NjA0Mn0.hguIfyynGc19tsSm9u66qy5IeUv40_mE8-JBjqnOQBE";
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -720,6 +770,7 @@ const postPreview = document.getElementById('postPreview');
 const previewFileName = document.getElementById('previewFileName');
 const removeMediaBtn = document.getElementById('removeMedia');
 const notificationBadge = document.getElementById('notificationBadge');
+const notificationBadgeMenu = document.getElementById('notificationBadgeMenu');
 const loadingOverlay = document.getElementById('loading-overlay');
 const customAlert = document.getElementById('customAlert');
 
@@ -734,15 +785,34 @@ const fullPostModal = document.getElementById('fullPostModal');
 const modalPostContainer = document.getElementById('modalPostContainer');
 const closeFullPostModalBtn = document.getElementById('closeFullPostModal');
 
+// New Search & Profile Elements
+const myProfileLink = document.getElementById('myProfileLink');
+const myProfileAvatar = document.getElementById('myProfileAvatar');
+const searchInput = document.getElementById('searchInput');
+const searchBtn = document.getElementById('searchBtn');
+
+// New "People You Know" Elements for Glide Motion
+const suggestedFriendsContainer = document.getElementById('suggestedFriendsContainer');
+const suggestedFriendsWrapper = document.getElementById('suggestedFriendsWrapper');
+const suggestedFriendsSection = document.getElementById('suggestedFriendsSection');
+const feed = document.getElementById('feed');
+const originalFeedHtml = feed.innerHTML; 
+let allPostsAndComments = [];
+let isFFmpegLoaded = false;
+let ffmpeg;
+
 let currentFile = null;
 
 // --- Pagination for Feed ---
 let currentPage = 1;
-const POSTS_PER_PAGE = 5;
+const POSTS_PER_PAGE = 7;
+const ADS_INTERVAL = 3;
 let allPosts = [];
 let allAds = [];
 let isLoading = false;
 let hasMorePosts = true;
+let isPremiumUser = false;
+let myProfileData = null;
 
 // --- PWA Installation Prompt ---
 let deferredPrompt;
@@ -805,7 +875,7 @@ function showAlert(message, isError = false) {
     customAlert.classList.add('show');
     setTimeout(() => {
         customAlert.classList.remove('show');
-    }, 3000);
+    }, 6000);
 }
 
 // --- Utility Functions (TimeAgo, fetchNotifications) ---
@@ -843,14 +913,30 @@ async function fetchNotifications() {
     }
 
     const mainBadge = document.getElementById('notificationBadge');
+    const menuBadge = document.getElementById('notificationBadgeMenu');
     if (count > 0) {
         mainBadge.textContent = count;
+        menuBadge.textContent = count;
         mainBadge.style.display = 'flex';
+        menuBadge.style.display = 'flex';
     } else {
         mainBadge.style.display = 'none';
+        menuBadge.style.display = 'none';
     }
 }
-
+async function loadFFmpeg() {
+    if (isFFmpegLoaded) return;
+    try {
+        const { createFFmpeg, fetchFile } = FFmpeg;
+        ffmpeg = createFFmpeg({ log: false });
+        await ffmpeg.load();
+        isFFmpegLoaded = true;
+        console.log('FFmpeg loaded successfully');
+    } catch (e) {
+        console.error("Failed to load FFmpeg:", e);
+        showAlert("Failed to load video processor. Video features will be disabled.", true);
+    }
+}
 // --- Menu Toggle ---
 document.getElementById("menuBtn").addEventListener("click", () => {
     const menu = document.getElementById("menuContent");
@@ -914,7 +1000,7 @@ async function trimVideo(file) {
     return trimmedBlob;
 }
 
-// --- Create Post Functionality ---
+// --- Create Post Functionality with restrictions ---
 submitPostBtn.addEventListener('click', async () => {
     const postContent = postContentInput.value.trim();
     if (!postContent && !currentFile) {
@@ -933,6 +1019,25 @@ submitPostBtn.addEventListener('click', async () => {
             return;
         }
 
+        // --- Post Count Restriction for non-premium users
+        if (!isPremiumUser) {
+            const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+            const { count, error } = await supabase
+                .from('posts')
+                .select('*', { count: 'exact', head: true })
+                .eq('author_id', user.id)
+                .gte('created_at', twentyFourHoursAgo);
+
+            if (error) throw new Error("Failed to check post count.");
+            const MAX_POSTS_PER_DAY = 1;
+            if (count >= MAX_POSTS_PER_DAY) {
+                showAlert(`Free users can only make ${MAX_POSTS_PER_DAY} posts every 24 hours. Please upgrade to premium to post more.`, true);
+                submitPostBtn.disabled = false;
+                submitPostBtn.textContent = "Post";
+                return;
+            }
+        }
+        
         let imageUrl = null;
         let videoUrl = null;
 
@@ -954,13 +1059,7 @@ submitPostBtn.addEventListener('click', async () => {
                     });
                 });
             } else if (fileType === 'videos') {
-                const { data: profile } = await supabase
-                    .from('profiles')
-                    .select('is_premium')
-                    .eq('user_id', user.id)
-                    .single();
-
-                if (!profile || !profile.is_premium) {
+                if (!isPremiumUser) {
                     showAlert("Only premium users can post videos.", true);
                     submitPostBtn.disabled = false;
                     submitPostBtn.textContent = "Post";
@@ -1198,10 +1297,82 @@ closeFullPostModalBtn.addEventListener('click', () => {
     document.body.style.overflow = '';
 });
 
+// --- Glide motion for suggested friends ---
+let glideInterval;
+let isDragging = false;
+let startX;
+let scrollLeft;
+const GLIDE_SPEED = 4000; // in milliseconds
+
+function startGlide() {
+    if (suggestedFriendsWrapper.scrollWidth <= suggestedFriendsContainer.clientWidth) return;
+    glideInterval = setInterval(() => {
+        let currentScroll = suggestedFriendsContainer.scrollLeft;
+        let maxScroll = suggestedFriendsWrapper.scrollWidth - suggestedFriendsContainer.clientWidth;
+        let newScroll = currentScroll + 90; // Move by one card width
+
+        if (newScroll >= maxScroll) {
+            newScroll = 0;
+        }
+        suggestedFriendsContainer.scrollTo({
+            left: newScroll,
+            behavior: 'smooth'
+        });
+    }, GLIDE_SPEED);
+}
+
+function stopGlide() {
+    clearInterval(glideInterval);
+}
+
+suggestedFriendsContainer.addEventListener('mouseenter', stopGlide);
+suggestedFriendsContainer.addEventListener('mouseleave', startGlide);
+suggestedFriendsContainer.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    startX = e.pageX - suggestedFriendsContainer.offsetLeft;
+    scrollLeft = suggestedFriendsContainer.scrollLeft;
+    suggestedFriendsContainer.style.cursor = 'grabbing';
+    stopGlide();
+});
+suggestedFriendsContainer.addEventListener('mouseleave', () => {
+    if (isDragging) {
+        isDragging = false;
+        suggestedFriendsContainer.style.cursor = 'grab';
+        startGlide();
+    }
+});
+suggestedFriendsContainer.addEventListener('mouseup', () => {
+    isDragging = false;
+    suggestedFriendsContainer.style.cursor = 'grab';
+    startGlide();
+});
+suggestedFriendsContainer.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    const x = e.pageX - suggestedFriendsContainer.offsetLeft;
+    const walk = (x - startX) * 2;
+    suggestedFriendsContainer.scrollLeft = scrollLeft - walk;
+});
+suggestedFriendsContainer.addEventListener('touchstart', (e) => {
+    stopGlide();
+    isDragging = true;
+    startX = e.touches[0].pageX - suggestedFriendsContainer.offsetLeft;
+    scrollLeft = suggestedFriendsContainer.scrollLeft;
+}, { passive: true });
+suggestedFriendsContainer.addEventListener('touchend', () => {
+    isDragging = false;
+    startGlide();
+});
+suggestedFriendsContainer.addEventListener('touchmove', (e) => {
+    if (!isDragging) return;
+    const x = e.touches[0].pageX - suggestedFriendsContainer.offsetLeft;
+    const walk = (x - startX) * 2;
+    suggestedFriendsContainer.scrollLeft = scrollLeft - walk;
+}, { passive: false });
+
+
 // Update the renderSuggestedFriends function
 async function renderSuggestedFriends(currentUserId) {
-    const bar = document.getElementById('suggestedFriendsBar');
-    bar.innerHTML = '<span style="color:#fbbf24; font-size:small; font-weight:bold;">People You May Know:</span>';
     const { data: friends } = await supabase
         .from('friend_requests')
         .select('sender_id,receiver_id')
@@ -1219,30 +1390,30 @@ async function renderSuggestedFriends(currentUserId) {
         .select('user_id,full_name,avatar_url')
         .not('user_id', 'in', `(${Array.from(friendIds).join(',')})`)
         .limit(10);
+
+    suggestedFriendsWrapper.innerHTML = '';
     if (profiles && profiles.length > 0) {
-        bar.innerHTML += `
-            <div class="suggestion-container">
-                <div class="suggestion-scroll">
-                    ${profiles.map(profile => `
-                        <div onclick="window.location='profile.html?id=${profile.user_id}'"
-                             style="min-width:120px;cursor:pointer;background:rgba(255,255,255,0.08);
-                                    border-radius:1rem;padding:1rem;margin-right:1rem;
-                                    display:flex;flex-direction:column;align-items:center;
-                                    box-shadow:0 2px 8px rgba(0,0,0,0.1);">
-                            ${profile.avatar_url
-                                ? `<img src="${profile.avatar_url}" style="width:60px;height:60px;border-radius:50%;object-fit:cover;margin-bottom:0.5rem;">`
-                                : `<div style="width:60px;height:60px;border-radius:50%;background:#475569;display:flex;align-items:center;justify-content:center;color:#fff;font-size:2rem;margin-bottom:0.5rem;"><i class="fa-solid fa-user"></i></div>`}
-                            <span style="color:#fff;font-size:1rem;text-align:center;white-space:normal;width:100%;">${profile.full_name}</span>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>`;
+        profiles.forEach(profile => {
+            const item = document.createElement('div');
+            item.className = 'suggested-friends-item';
+            item.onclick = () => window.location.href = `profile.html?id=${profile.user_id}`;
+            item.innerHTML = `
+                ${profile.avatar_url
+                    ? `<img src="${profile.avatar_url}" style="width:60px;height:60px;border-radius:50%;object-fit:cover;margin-bottom:0.5rem;">`
+                    : `<div style="width:60px;height:60px;border-radius:50%;background:#475569;display:flex;align-items:center;justify-content:center;color:#fff;font-size:2rem;margin-bottom:0.5rem;"><i class="fa-solid fa-user"></i></div>`}
+                <span style="color:#fff;font-size:1rem;text-align:center;white-space:normal;width:100%;">${profile.full_name}</span>
+            `;
+            suggestedFriendsWrapper.appendChild(item);
+        });
+        suggestedFriendsSection.style.display = 'block';
+        startGlide();
     } else {
-        bar.innerHTML += `<div style="color:#94a3b8;padding:1rem 0;">No suggestions right now.</div>`;
+        suggestedFriendsSection.style.display = 'none';
     }
 }
 
-async function loadFeed(page = 1, append = false) {
+// This is the complete, revised loadFeed function.
+async function loadFeed(page = 1, append = false, searchTerm = null) {
     if (isLoading) return;
     isLoading = true;
     showLoading();
@@ -1251,7 +1422,6 @@ async function loadFeed(page = 1, append = false) {
     if (loadMoreBtn) loadMoreBtn.style.display = 'none';
 
     if (!append) {
-        document.querySelectorAll('.placeholder-card').forEach(el => el.remove());
         feedContainer.innerHTML = '';
         currentPage = 1;
         hasMorePosts = true;
@@ -1262,43 +1432,27 @@ async function loadFeed(page = 1, append = false) {
         window.location.href = "index.html";
         return;
     }
-
-    const myProfileLink = document.querySelector('.menu-content a[href="profile.html"]');
-    if (myProfileLink) {
+    
+    // Fetch user profile and check premium status
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_premium, avatar_url')
+        .eq('user_id', user.id)
+        .single();
+    if (profile) {
+        isPremiumUser = profile.is_premium;
+        myProfileAvatar.src = profile.avatar_url || 'https://via.placeholder.com/40';
         myProfileLink.href = `profile.html?id=${user.id}`;
+        const premiumBadge = document.getElementById('premiumBadge');
+        premiumBadge.className = isPremiumUser ? 'fa-solid fa-gem premium-badge' : 'fa-solid fa-star free-badge';
     }
     fetchNotifications();
 
-    const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('is_premium')
-        .eq('user_id', user.id)
-        .single();
-
-    if (profile && !profile.is_premium && !append) {
-        const premiumAdHTML = `
-            <div class="ad-card" style="background: linear-gradient(135deg, #ef4444, #f87171); border:none; box-shadow: 0 8px 32px 0 rgba(239, 68, 68, 0.2);">
-                <span class="ad-label" style="background: rgba(255,255,255,0.3); color: #fff;">Special Offer</span>
-                <h2 style="color: #fff; margin-top: 0; margin-bottom: 0.8rem;">Go Premium! ✨</h2>
-                <p style="color: #fff; font-size: 0.95rem;">Unlock video posts, multiple ad slots, and a faster experience!</p>
-                <a href="premium.html" class="ad-link" style="background: #fbbf24; color: #0f172a;">Upgrade Now <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
-            </div>
-        `;
-        document.getElementById('suggestedFriendsBar').insertAdjacentHTML('afterend', premiumAdHTML);
-    }
-
-    if (!append || allPosts.length === 0) {
-        const [
-            { data: posts, error: postsError },
-            { data: likes, error: likesError },
-            { data: comments, error: commentsError },
-            { data: ads, error: adsError }
-        ] = await Promise.all([
-            supabase.from('posts').select('*').order('created_at', { ascending: false }),
-            supabase.from('likes').select('*'),
-            supabase.from('comments').select('post_id'),
-            supabase.from('ads').select('*').eq('is_active', true).order('created_at', { ascending: false })
-        ]);
+    if (!searchTerm) {
+        const { data: posts, error: postsError } = await supabase
+            .from('posts')
+            .select('*')
+            .order('created_at', { ascending: false });
         if (postsError) {
             console.error("Error fetching posts:", postsError.message);
             feedContainer.innerHTML = `<p style="text-align: center; color: #ef4444;">Error loading posts.</p>`;
@@ -1307,9 +1461,53 @@ async function loadFeed(page = 1, append = false) {
             return;
         }
         allPosts = posts || [];
+        const { data: ads } = await supabase.from('ads').select('*').eq('is_active', true).order('created_at', { ascending: false });
         allAds = ads || [];
-    }
+        renderSuggestedFriends(user.id);
+        suggestedFriendsSection.style.display = 'block';
+    } else {
+        const searchQuery = `%${searchTerm.toLowerCase()}%`;
+        
+        // Execute all three search queries in parallel to find matching post IDs
+        const [postsWithContent, commentsFound, profilesFound] = await Promise.all([
+            supabase.from('posts').select('id').ilike('content', searchQuery),
+            supabase.from('comments').select('post_id').ilike('comment_text', searchQuery),
+            supabase.from('profiles').select('user_id').ilike('full_name', searchQuery),
+        ]);
 
+        const postIds = new Set();
+        if (postsWithContent.data) postsWithContent.data.forEach(p => postIds.add(p.id));
+        if (commentsFound.data) commentsFound.data.forEach(c => postIds.add(c.post_id));
+        
+        // Get posts from users with matching names
+        if (profilesFound.data) {
+            const userIds = profilesFound.data.map(p => p.user_id);
+            if (userIds.length > 0) {
+                const { data: userPosts } = await supabase.from('posts').select('id').in('author_id', userIds);
+                if (userPosts) userPosts.forEach(p => postIds.add(p.id));
+            }
+        }
+        
+        // Fetch full posts for the unique IDs found
+        const { data: posts, error: fetchPostsError } = await supabase
+            .from('posts')
+            .select('*')
+            .in('id', Array.from(postIds))
+            .order('created_at', { ascending: false });
+        
+        if (fetchPostsError) {
+             console.error("Error fetching search results:", fetchPostsError.message);
+             feedContainer.innerHTML = `<p style="text-align: center; color: #ef4444;">Error fetching search results.</p>`;
+             hideLoading();
+             isLoading = false;
+             return;
+        }
+        allPosts = posts || [];
+        allAds = []; // Do not show ads during search
+        suggestedFriendsSection.style.display = 'none';
+    }
+    
+    // The rest of the function remains the same, but it now uses the correctly populated allPosts array
     const start = (page - 1) * POSTS_PER_PAGE;
     const end = start + POSTS_PER_PAGE;
     const postsToShow = allPosts.slice(start, end);
@@ -1335,6 +1533,7 @@ async function loadFeed(page = 1, append = false) {
         if (likesRes.data) likes.push(...likesRes.data);
         if (commentsRes.data) comments.push(...commentsRes.data);
     }
+    
     const likesMap = {};
     likes.forEach(like => {
         if (!likesMap[like.post_id]) likesMap[like.post_id] = [];
@@ -1349,7 +1548,7 @@ async function loadFeed(page = 1, append = false) {
     const feedContent = [];
     postsToShow.forEach((post, index) => {
         feedContent.push({ type: 'post', data: post });
-        if (allAds.length > 0 && (index + 1) % 2 === 0) {
+        if (!searchTerm && allAds.length > 0 && (index + 1) % ADS_INTERVAL === 0) {
             feedContent.push({ type: 'ad', data: allAds[adIndex % allAds.length] });
             adIndex++;
         }
@@ -1383,7 +1582,7 @@ async function loadFeed(page = 1, append = false) {
             feedContainer.appendChild(loadMoreBtn);
             loadMoreBtn.addEventListener('click', () => {
                 currentPage++;
-                loadFeed(currentPage, true);
+                loadFeed(currentPage, true, searchTerm);
             });
         } else {
             feedContainer.appendChild(loadMoreBtn);
@@ -1393,11 +1592,17 @@ async function loadFeed(page = 1, append = false) {
         const btn = document.getElementById('loadMoreBtn');
         if (btn) btn.remove();
     }
+    
+    if (postsToShow.length === 0) {
+        feedContainer.innerHTML = '<p style="text-align: center; color: #94a3b8;">No results found.</p>';
+    }
 
     lazyLoadImages();
     hideLoading();
     isLoading = false;
 }
+
+
 // --- Like / Unlike Post Handler ---
 async function handleLike(postId, buttonElement) {
     const { data: { user } } = await supabase.auth.getUser();
@@ -1438,7 +1643,7 @@ async function handleLike(postId, buttonElement) {
         if (postCard && heartIcon) {
             const emoji = document.createElement('div');
             emoji.className = 'floating-emoji';
-            emoji.textContent = '💖';
+            emoji.textContent = '💕';
 
             const rect = heartIcon.getBoundingClientRect();
             emoji.style.left = `${rect.left + rect.width / 2}px`;
@@ -1453,11 +1658,28 @@ async function handleLike(postId, buttonElement) {
     }
 }
 
-// --- Handle Comment Function ---
+// --- Handle Comment Function with restrictions ---
 async function handleComment(postId, commentText, isModal = false) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { showAlert("Please log in to comment.", true); return; }
 
+    // Comment count restriction for non-premium users
+    if (!isPremiumUser) {
+        const { count, error } = await supabase
+            .from('comments')
+            .select('*', { count: 'exact', head: true })
+            .eq('post_id', postId)
+            .eq('author_id', user.id);
+        
+        if (error) { console.error("Error checking comment count:", error.message); return; }
+
+        const MAX_COMMENTS_PER_POST = 0;
+        if (count >= MAX_COMMENTS_PER_POST) {
+            showAlert(`Free users cannot upload more than ${MAX_COMMENTS_PER_POST} comments to a single post. Please upgrade to premium to comment more.`, true);
+            return;
+        }
+    }
+    
     const { data: newComment, error } = await supabase.from('comments').insert({
         post_id: postId,
         author_id: user.id,
@@ -1531,11 +1753,32 @@ function lazyLoadImages() {
     });
 }
 
-// --- Initial Load ---
-loadFeed();
+// --- Search Functionality ---
+searchBtn.addEventListener('click', () => {
+    const searchTerm = searchInput.value.trim();
+    if (searchTerm) {
+        loadFeed(1, false, searchTerm);
+    } else {
+        loadFeed(); // Reload feed if search is cleared
+    }
+});
 
-const containerCreatePost = document.querySelector('.container .create-post');
-if (containerCreatePost) containerCreatePost.style.display = 'none';
+searchInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        searchBtn.click();
+    }
+});
+
+
+// --- Initial Load ---
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadFeed();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+        renderSuggestedFriends(user.id);
+    }
+});
+
 
 const floatingPostBtn = document.getElementById('floatingPostBtn');
 const postModalOverlay = document.getElementById('postModalOverlay');
@@ -1556,9 +1799,6 @@ window.addEventListener('click', (e) => {
     }
 });
 
-renderSuggestedFriends();
-
     </script>
 </body>
 </html>
-
