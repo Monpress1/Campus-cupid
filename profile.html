@@ -7,6 +7,7 @@
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="https://unpkg.com/compressorjs/dist/compressor.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 <style>
 /* Base Styles & Utilities */
 body {
@@ -371,6 +372,17 @@ button#cancelBtn:hover { background: #334155; }
 }
 .friend-item button.unfriend-btn { background: #ef4444; color: #fff; }
 .friend-item button:hover { opacity: 0.8; }
+.insta-gradient-icon {
+  background: linear-gradient(45deg, #f09433, #e6683c, #dc2777, #cc2366, #bc1888);
+  background-clip: text;
+  -webkit-background-clip: text; /* For Safari/Chrome */
+  -webkit-text-fill-color: transparent; /* For Safari/Chrome */
+  color: transparent; /* For other browsers */
+}
+.arr{
+    display:flex;
+    
+}
 </style>
 </head>
 <body>
@@ -489,8 +501,19 @@ button#cancelBtn:hover { background: #334155; }
 </div>
 
 <button id="floatingChatBtn"><i class="fa-solid fa-comments"></i></button>
+<br> Contact us <br>
+<br>
+<div class="arr">
+<a href="https://wa.link/bxxhnk" target="_blank" class="whatsapp-icon">
+            <i class="fa fa-whatsapp" style="font-size:40px; color:#373; text-shadow:2px 3px 2px black;"></i> 
+        </a>
+        
+            <a href="https://www.instagram.com/ruysteve/?utm_source=ig_web_button_share_sheet" target="_blank" class="instagram-icon">
+    <i class="fa fa-instagram insta-gradient-icon" style="font-size:40px; margin-left:20px;"></i>
+</a>
 
-
+        </a>
+        </div>
 <script>
 const SUPABASE_URL = "https://vfbjwkfurleatfdrabdg.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmYmp3a2Z1cmxlYXRmZHJhYmRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MjAwNDIsImV4cCI6MjA3Mjk5NjA0Mn0.hguIfyynGc19tsSm9u66qy5IeUv40_mE8-JBjqnOQBE";
