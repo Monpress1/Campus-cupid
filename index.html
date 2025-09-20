@@ -8,6 +8,9 @@
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#fbbf24">
   <link rel="icon" href="/images/icons/icon-192x192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Campus Cupid">
 
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -69,6 +72,29 @@
     .hidden { display: none; }
     .row { display: flex; gap: 0.5rem; }
     .row select { flex: 1; }
+    .ios-prompt {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #334155;
+      color: #fff;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      z-index: 1000;
+      width: 90%;
+      max-width: 300px;
+      font-size: 0.9em;
+      line-height: 1.4;
+    }
+    .ios-prompt p { margin: 0; }
+    .ios-prompt i {
+      font-size: 1.5em;
+      margin: 0 5px;
+      color: #fbbf24;
+    }
     @media (max-width: 480px) {
       .container { margin: 1rem; padding: 1.5rem; }
       h1 { font-size: 1.5rem; }
@@ -111,6 +137,10 @@
     
     <button id="pwa-install-button" class="hidden" style="margin-top: 1rem;">Install App</button>
   </div>
+  
+  <div id="ios-prompt" class="ios-prompt hidden">
+    <p>To install, tap <i class="fa-solid fa-arrow-up-from-bracket"></i> then 'Add to Home Screen'.</p>
+  </div>
 
   <script>
     const supabase = window.supabase.createClient(
@@ -122,6 +152,7 @@
     const signupForm = document.getElementById("signup-form");
     const toggleView = document.getElementById("toggle-view");
     const pwaInstallButton = document.getElementById("pwa-install-button");
+    const iosPrompt = document.getElementById("ios-prompt");
     let deferredPrompt;
 
     // Populate age dropdown
@@ -146,11 +177,38 @@
       e.preventDefault();
       const email = document.getElementById("login-email").value;
       const password = document.getElementById("login-password").value;
+      
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      
       if (error) {
         alert(error.message);
       } else {
-        window.location.href = "profile.html";
+        const user = data.user;
+        if (user) {
+            // Check if the user's profile is complete
+            const { data: profile, error: profileError } = await supabase
+                .from('profiles')
+                .select('full_name, age, gender')
+                .eq('user_id', user.id)
+                .single();
+
+            if (profileError) {
+                console.error("Error fetching user profile:", profileError);
+                // In case of an error, redirect to profile.html as a fallback
+                window.location.href = "profile.html";
+                return;
+            }
+
+            // Check for profile completeness
+            if (profile && profile.full_name && profile.age && profile.gender) {
+                window.location.href = "feed.html"; // Redirect to feed if profile is complete
+            } else {
+                window.location.href = "profile.html"; // Redirect to profile to complete it
+            }
+        } else {
+            // Fallback if user data is not returned
+            window.location.href = "profile.html";
+        }
       }
     });
 
@@ -209,9 +267,9 @@
       });
     }
 
-    // ✅ PWA install logic with the correct fix
+    // ✅ PWA install logic for Android/Desktop
     window.addEventListener('beforeinstallprompt', (e) => {
-      // Crucial fix: prevent the default browser prompt
+      // Prevents the default browser prompt
       e.preventDefault();       
       deferredPrompt = e;
       pwaInstallButton.classList.remove('hidden'); // Show your custom button
@@ -227,8 +285,28 @@
       const { outcome } = await deferredPrompt.userChoice;
       console.log(`User response to the install prompt: ${outcome}`);
       deferredPrompt = null;
-      pwaInstallButton.classList.add('hidden'); // Hide the button after use
+      pwaInstallButton.classList.add('hidden');
     });
+
+    // ✅ iOS Home Screen Prompt Logic
+    function isiOS() {
+        const userAgent = window.navigator.userAgent.toLowerCase();
+        return /iphone|ipad|ipod/.test(userAgent);
+    }
+    
+    function isInStandaloneMode() {
+        return ('standalone' in window.navigator) && (window.navigator.standalone);
+    }
+
+    window.addEventListener('load', () => {
+        if (isiOS() && !isInStandaloneMode()) {
+            // Show the prompt after a short delay to not disrupt initial load
+            setTimeout(() => {
+                iosPrompt.classList.remove('hidden');
+            }, 3000); // 3-second delay
+        }
+    });
+
   </script>
 </body>
 </html>
