@@ -291,7 +291,7 @@
         const SUPABASE_URL = "https://vfbjwkfurleatfdrabdg.supabase.co";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmYmp3a2Z1cmxlYXRmZHJhYmRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MjAwNDIsImV4cCI6MjA3Mjk5NjA0Mn0.hguIfyynGc19tsSm9u66qy5IeUv40_mE8-JBjqnOQBE";
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
+        
         const payBtn = document.getElementById('payBtn');
         const loadingOverlay = document.getElementById('loading-overlay');
         const customAlert = document.getElementById('customAlert');
@@ -300,6 +300,8 @@
         // Your Live Paystack Public API Key
         // REPLACE THIS WITH YOUR OWN LIVE PUBLIC KEY!
         const PAYSTACK_PUBLIC_KEY = 'pk_live_d425d16ee8cebccd2fd132fe4dae2cbf0ee5a579';
+        
+        const CACHE_LIFETIME = 10 * 60 * 1000; // 10 minutes
 
         function showLoading() { loadingOverlay.style.display = 'flex'; }
         function hideLoading() { loadingOverlay.style.display = 'none'; }
@@ -318,9 +320,20 @@
 
         document.getElementById("logoutBtn").addEventListener("click", async () => {
             await supabase.auth.signOut();
+            // Clear the cache on logout
+            localStorage.removeItem('premium_status_cache');
             window.location.href = "index.html";
         });
         
+        async function cachePremiumStatus(isPremium) {
+            const cacheData = {
+                is_premium: isPremium,
+                timestamp: new Date().getTime()
+            };
+            localStorage.setItem('premium_status_cache', JSON.stringify(cacheData));
+            console.log('Premium status cached:', cacheData);
+        }
+
         async function checkSessionAndPremiumStatus() {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) {
@@ -332,7 +345,6 @@
                     myProfileLink.href = `profile.html?id=${user.id}`;
                 }
 
-                // Check for premium status from the profiles table
                 const { data: profile, error } = await supabase
                     .from('profiles')
                     .select('is_premium')
@@ -344,10 +356,12 @@
                     showAlert('Could not load premium status.', true);
                 }
 
-                if (profile && profile.is_premium) {
+                const isPremium = profile && profile.is_premium;
+                await cachePremiumStatus(isPremium);
+
+                if (isPremium) {
                     showPremiumActivated();
                 } else {
-                    // Show the payment form if not premium
                     const paymentForm = document.querySelector('.payment-form');
                     if (paymentForm) paymentForm.style.display = 'block';
                 }
@@ -380,24 +394,17 @@
                 return;
             }
 
-            // *** This is the Paystack payment initiation ***
             const handler = PaystackPop.setup({
                 key: PAYSTACK_PUBLIC_KEY, 
                 email: user.email,
-                amount: 30000, // KES 300.00 (in cents)
+                amount: 30000,
                 currency: 'KES', 
                 reference: '' + Math.floor((Math.random() * 1000000000) + 1), 
                 
                 callback: function(response) {
-                    // This function runs on successful payment.
-                    // IMPORTANT: You MUST verify this transaction on your backend (Supabase Function/Edge Function).
-                    // This frontend logic is for user experience only.
-                    
                     const reference = response.reference;
                     console.log(`Payment successful. Reference: ${reference}`);
                     showAlert("🎉 Payment Successful! Verifying...", false);
-                    
-                    // Call the function to update the user's status in Supabase
                     updatePremiumStatus(user.id);
                 },
                 
@@ -429,7 +436,10 @@
                     });
 
                 if (membershipError) throw new Error("Supabase membership record failed.");
-
+                
+                // Update the cache immediately after successful update
+                await cachePremiumStatus(true);
+                
                 showAlert("You are now a Premium Member!");
                 setTimeout(() => {
                     window.location.href = "feed.html";
@@ -444,6 +454,12 @@
                 payBtn.textContent = "Pay Now";
             }
         }
+        
+        // Run a background check and update every 10 minutes
+        setInterval(() => {
+            checkSessionAndPremiumStatus();
+        }, CACHE_LIFETIME);
+
 
         payBtn.addEventListener('click', handlePayment);
         checkSessionAndPremiumStatus();

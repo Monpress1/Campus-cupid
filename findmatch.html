@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Campus Cupid ❤️ - Find Match</title>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+body {
+    margin: 0;
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: linear-gradient(135deg, #0f172a, #1e293b, #334155);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    overflow: hidden;
+}
+.header {
+    width: 100%;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    z-index: 100;
+}
+.logo {
+    font-family: 'Pacifico', cursive;
+    font-size: 2rem;
+    color: #fbbf24;
+    text-decoration: none;
+}
+.nav-icons {
+    display: flex;
+    gap: 1.5rem; /* Use gap for spacing between icons */
+    align-items: center;
+}
+.nav-icons a {
+    color: #fff;
+    font-size: 1.5rem;
+    transition: color 0.2s;
+}
+.nav-icons a:hover {
+    color: #fbbf24;
+}
+.cards-container {
+    width: 90vw;
+    max-width: 400px;
+    height: 60vh;
+    min-height: 400px;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.profile-card {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    border-radius: 1rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    cursor: grab;
+    will-change: transform;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    overflow: hidden;
+    touch-action: none;
+}
+.profile-card:nth-child(2) {
+    transform: translateY(-10px) scale(0.95);
+    z-index: 2;
+}
+.profile-card:nth-child(3) {
+    transform: translateY(-20px) scale(0.9);
+    z-index: 1;
+}
+.profile-card:nth-child(n+4) {
+    display: none;
+}
+.profile-info {
+    padding: 1rem;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+    color: white;
+    position: relative;
+}
+.profile-info h3 {
+    margin: 0 0 0.2rem;
+    font-size: 1.5rem;
+}
+.profile-info p {
+    margin: 0;
+    font-size: 1rem;
+}
+.chat-icon {
+    position: absolute;
+    bottom: 1rem;
+    right: 1rem;
+    font-size: 2rem;
+    color: #22c55e;
+    text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+.chat-icon:hover {
+    transform: scale(1.1);
+}
+.status-indicator {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 3rem;
+    font-weight: bold;
+    opacity: 0;
+    transition: opacity 0.5s, transform 0.5s;
+    pointer-events: none;
+    text-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
+    z-index: 10;
+}
+.status-indicator.like {
+    color: #22c55e;
+    transform: translate(-50%, -50%) rotate(-30deg);
+}
+.status-indicator.nope {
+    color: #ef4444;
+    transform: translate(-50%, -50%) rotate(30deg);
+}
+.status-indicator.visible {
+    opacity: 1;
+}
+.no-more-matches {
+    text-align: center;
+    padding: 2rem;
+    color: #cbd5e1;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+    <a href="feed.html" class="logo">Campus Cupid</a>
+    <div class="nav-icons">
+        <a href="feed.html"><i class="fa-solid fa-fire"></i></a>
+        <a href="chat.html"><i class="fa-solid fa-comments"></i></a>
+        <a href="profile.html"><i class="fa-solid fa-user"></i></a>
+        <a href="notifications.html"><i class="fa-solid fa-bell"></i></a>
+    </div>
+</div>
+
+<div class="cards-container" id="cardsContainer">
+    <div id="loading" style="text-align: center; color: #cbd5e1;">
+        <i class="fa-solid fa-spinner fa-spin-pulse" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+        <h3>Loading matches...</h3>
+    </div>
+    
+    <div class="no-more-matches" style="display:none;">
+        <i class="fa-solid fa-face-sad-tear" style="font-size: 3rem;"></i>
+        <h3>No more matches for now!</h3>
+        <p>Check back later for new profiles.</p>
+    </div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://vfbjwkfurleatfdrabdg.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmYmp3a2Z1cmxlYXRmZHJhYmRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MjAwNDIsImV4cCI6MjA3Mjk5NjA0Mn0.hguIfyynGc19tsSm9u66qy5IeUv40_mE8-JBjqnOQBE";
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const cardsContainer = document.getElementById('cardsContainer');
+const noMoreMatches = document.querySelector('.no-more-matches');
+const loadingIndicator = document.getElementById('loading');
+
+let currentUserId = null;
+let currentCard = null;
+
+init();
+
+async function init() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        window.location.href = "index.html";
+        return;
+    }
+    currentUserId = user.id;
+
+    const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('is_premium')
+        .eq('user_id', currentUserId)
+        .single();
+    
+    if (error || !profile.is_premium) {
+        window.location.href = "premium.html";
+        return;
+    }
+
+    loadProfiles();
+}
+
+// Fisher-Yates shuffle algorithm
+function shuffle(array) {
+  let currentIndex = array.length, randomIndex;
+
+  while (currentIndex !== 0) {
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex--;
+    [array[currentIndex], array[randomIndex]] = [
+      array[randomIndex], array[currentIndex]
+    ];
+  }
+  return array;
+}
+
+async function loadProfiles() {
+    loadingIndicator.style.display = 'block';
+
+    const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .neq('user_id', currentUserId);
+
+    loadingIndicator.style.display = 'none';
+
+    if (error) {
+        console.error('Error fetching profiles:', error);
+        noMoreMatches.style.display = 'block';
+        return;
+    }
+    
+    if (data.length === 0) {
+        noMoreMatches.style.display = 'block';
+        return;
+    }
+
+    // Shuffle the profiles before displaying
+    const shuffledProfiles = shuffle(data);
+
+    shuffledProfiles.forEach(p => {
+        const card = createCard(p);
+        cardsContainer.appendChild(card);
+    });
+
+    currentCard = cardsContainer.querySelector('.profile-card');
+    if (currentCard) {
+        setupCardEvents(currentCard);
+    }
+}
+
+function createCard(profile) {
+    const card = document.createElement('div');
+    card.className = 'profile-card';
+    card.dataset.userId = profile.user_id;
+    card.style.backgroundImage = `url(${profile.avatar_url || 'https://via.placeholder.com/400x600?text=No+Photo'})`;
+    card.innerHTML = `
+        <div class="profile-info">
+            <h3>${profile.full_name}, ${profile.age || 'N/A'}</h3>
+            <p>${profile.bio || 'No bio yet.'}</p>
+        </div>
+        <div class="status-indicator like">MATCH!</div>
+        <div class="status-indicator nope">NOPE!</div>
+    `;
+    return card;
+}
+
+function setupCardEvents(card) {
+    let startX, startY;
+    let isDragging = false;
+    let lastX = 0;
+    const likeIndicator = card.querySelector('.like');
+    const nopeIndicator = card.querySelector('.nope');
+
+    const handleStart = (e) => {
+        isDragging = true;
+        startX = e.clientX || e.touches[0].clientX;
+        startY = e.clientY || e.touches[0].clientY;
+        card.style.transition = 'none';
+    };
+
+    const handleMove = (e) => {
+        if (!isDragging) return;
+        const currentX = e.clientX || e.touches[0].clientX;
+        const currentY = e.clientY || e.touches[0].clientY;
+        const deltaX = currentX - startX;
+        const deltaY = currentY - startY;
+        const rotation = deltaX / 50;
+
+        card.style.transform = `translate(${deltaX}px, ${deltaY}px) rotate(${rotation}deg)`;
+        
+        const opacity = Math.min(Math.abs(deltaX) / 100, 1);
+        if (deltaX > 0) {
+            likeIndicator.style.opacity = opacity;
+            nopeIndicator.style.opacity = 0;
+        } else {
+            nopeIndicator.style.opacity = opacity;
+            likeIndicator.style.opacity = 0;
+        }
+        
+        lastX = deltaX;
+    };
+
+    const handleEnd = async () => {
+        isDragging = false;
+        card.style.transition = 'transform 0.5s ease-in-out';
+        likeIndicator.style.opacity = 0;
+        nopeIndicator.style.opacity = 0;
+
+        const swipeThreshold = window.innerWidth / 4;
+        const swipedUserId = card.dataset.userId;
+        
+        if (Math.abs(lastX) > swipeThreshold) {
+            const direction = lastX > 0 ? 'like' : 'nope';
+            
+            if (direction === 'like') {
+                const name = card.querySelector('h3').textContent.split(',')[0];
+                await startChatImmediately(swipedUserId, name);
+            }
+            
+            swipeCard(card, direction);
+        } else {
+            card.style.transform = 'translate(0, 0) rotate(0)';
+        }
+    };
+    
+    async function startChatImmediately(targetUserId, targetUserName) {
+        try {
+            // Check for existing chat room (to prevent duplicates)
+            const { data: existingRoom, error: findErr } = await supabase
+                .from('chat_rooms')
+                .select('id')
+                .or(`and(user1_id.eq.${currentUserId},user2_id.eq.${targetUserId}), and(user1_id.eq.${targetUserId},user2_id.eq.${currentUserId})`)
+                .single();
+
+            let roomId;
+            if (existingRoom) {
+                roomId = existingRoom.id;
+            } else {
+                // If no room exists, create a new one
+                const { data: newRoom, error: createErr } = await supabase
+                    .from('chat_rooms')
+                    .insert({ user1_id: currentUserId, user2_id: targetUserId })
+                    .select('id')
+                    .single();
+                if (createErr) throw createErr;
+                roomId = newRoom.id;
+            }
+
+            // Insert a first message
+            await supabase.from('messages').insert({
+                sender_id: currentUserId,
+                receiver_id: targetUserId,
+                content: ` Hi 💖${targetUserName} i swiped right!`
+            });
+
+            // Redirect to the chat page with the room ID
+            window.location.href = `chat.html?room_id=${roomId}`;
+
+        } catch (err) {
+            console.error('Error starting chat:', err);
+            alert('Could not start chat. Please try again.');
+        }
+    }
+    
+    const swipeCard = (card, direction) => {
+        const rotation = direction === 'like' ? 30 : -30;
+        const translateX = direction === 'like' ? '150vw' : '-150vw';
+        
+        card.style.transform = `translate(${translateX}, 0) rotate(${rotation}deg)`;
+        card.addEventListener('transitionend', () => {
+            card.remove();
+            moveToNextCard();
+        });
+    };
+
+    const moveToNextCard = () => {
+        const nextCard = cardsContainer.querySelector('.profile-card');
+        if (nextCard) {
+            nextCard.style.transition = 'transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+            nextCard.style.transform = 'translateY(0) scale(1)';
+            currentCard = nextCard;
+            setupCardEvents(currentCard);
+        } else {
+            noMoreMatches.style.display = 'block';
+        }
+    };
+
+    card.addEventListener('mousedown', handleStart);
+    card.addEventListener('mousemove', handleMove);
+    card.addEventListener('mouseup', handleEnd);
+    
+    card.addEventListener('touchstart', (e) => handleStart(e));
+    card.addEventListener('touchmove', (e) => handleMove(e));
+    card.addEventListener('touchend', handleEnd);
+}
+</script>
+</body>
+</html>
