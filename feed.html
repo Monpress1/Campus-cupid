@@ -759,7 +759,7 @@
     <div class="custom-alert" id="customAlert"></div>
 
     <script>
-// --- Supabase and Element Initialization ---
+        // --- Supabase and Element Initialization ---
 const SUPABASE_URL = "https://vfbjwkfurleatfdrabdg.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmYmp3a2Z1cmxlYXRmZHJhYmRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MjAwNDIsImV4cCI6MjA3Mjk5NjA0Mn0.hguIfyynGc19tsSm9u66qy5IeUv40_mE8-JBjqnOQBE";
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -881,7 +881,7 @@ function showAlert(message, isError = false) {
     }, 6000);
 }
 
-// --- Utility Functions (TimeAgo, fetchNotifications) ---
+// --- Utility Functions (TimeAgo, shuffleArray, fetchNotifications) ---
 function timeAgo(dateString) {
     const now = new Date();
     const past = new Date(dateString);
@@ -898,6 +898,14 @@ function timeAgo(dateString) {
     interval = seconds / 60;
     if (interval > 1) return Math.floor(interval) + " minutes ago";
     return Math.floor(seconds) + " seconds ago";
+}
+
+// NEW: Function to shuffle an array (Fisher-Yates algorithm)
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
 }
 
 async function fetchNotifications() {
@@ -1374,7 +1382,7 @@ suggestedFriendsContainer.addEventListener('touchmove', (e) => {
 }, { passive: false });
 
 
-// Update the renderSuggestedFriends function
+// REVISED: renderSuggestedFriends function for randomization
 async function renderSuggestedFriends(currentUserId) {
     const { data: friends } = await supabase
         .from('friend_requests')
@@ -1388,15 +1396,25 @@ async function renderSuggestedFriends(currentUserId) {
             if (f.receiver_id !== currentUserId) friendIds.add(f.receiver_id);
         });
     }
+
+    // Fetch a larger pool of non-friends (e.g., 100)
     const { data: profiles } = await supabase
         .from('profiles')
         .select('user_id,full_name,avatar_url')
         .not('user_id', 'in', `(${Array.from(friendIds).join(',')})`)
-        .limit(10);
+        .limit(100); // <-- Increased limit for randomization pool
 
+    let suggestedProfiles = profiles || [];
+    
+    // Shuffle the entire fetched list for randomness
+    shuffleArray(suggestedProfiles);
+
+    // Take only the top 10 after shuffling
+    suggestedProfiles = suggestedProfiles.slice(0, 10);
+    
     suggestedFriendsWrapper.innerHTML = '';
-    if (profiles && profiles.length > 0) {
-        profiles.forEach(profile => {
+    if (suggestedProfiles.length > 0) {
+        suggestedProfiles.forEach(profile => {
             const item = document.createElement('div');
             item.className = 'suggested-friends-item';
             item.onclick = () => window.location.href = `profile.html?id=${profile.user_id}`;
@@ -1452,6 +1470,8 @@ async function loadFeed(page = 1, append = false, searchTerm = null) {
     fetchNotifications();
 
     if (!searchTerm) {
+        // NOTE: This section is inefficient and downloads ALL posts. 
+        // A better approach is to use .range() on the Supabase query for actual pagination.
         const { data: posts, error: postsError } = await supabase
             .from('posts')
             .select('*')
@@ -1802,6 +1822,6 @@ window.addEventListener('click', (e) => {
     }
 });
 
-    </script>
+</script>
 </body>
 </html>
