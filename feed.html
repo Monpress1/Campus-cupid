@@ -1696,7 +1696,7 @@ async function handleComment(postId, commentText, isModal = false) {
         
         if (error) { console.error("Error checking comment count:", error.message); return; }
 
-        const MAX_COMMENTS_PER_POST = 0;
+        const MAX_COMMENTS_PER_POST = 1;
         if (count >= MAX_COMMENTS_PER_POST) {
             showAlert(`Free users cannot upload more than ${MAX_COMMENTS_PER_POST} comments to a single post. Please upgrade to premium to comment more.`, true);
             return;
