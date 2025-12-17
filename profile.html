@@ -7,7 +7,6 @@
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="https://unpkg.com/compressorjs/dist/compressor.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 <style>
 /* Base Styles & Utilities */
 body {
@@ -381,15 +380,13 @@ button#cancelBtn:hover { background: #334155; }
 }
 .arr{
     display:flex;
-    
 }
-contact{
-    border:px solid black;
+/* Fixed CSS for the contact-card (formerly 'contact' tag) */
+.contact-card {
     border-radius:8px;
-    
     box-shadow:6px 7px 4px;
     text-align:center;
-    justify-content
+    justify-content: center; /* FIX: Added missing value */
     align-items:center;
     background-color: #1e293b;
     margin: auto;
@@ -426,9 +423,9 @@ contact{
     <div class="menu">
       <i class="fa-solid fa-bars" id="menuBtn"></i>
       <div class="menu-content" id="menuContent">
-        <a href="feed.html"><i class="fa-solid fa-house"></i> Feed</a>
-        <a href="chat.html"><i class="fa-solid fa-comments"></i> Chat</a>
-        <a href="notifications.html" class="menu-item-with-badge">
+        <a href="feed.html" id="nav-feed"><i class="fa-solid fa-house"></i> Feed</a>
+        <a href="chat.html" id="nav-chat"><i class="fa-solid fa-comments"></i> Chat</a>
+        <a href="notifications.html" id="nav-notifications" class="menu-item-with-badge">
           <i class="fa-solid fa-bell"></i> Notifications
           <span class="badge" id="notificationBadge">0</span>
         </a>
@@ -491,12 +488,12 @@ contact{
         <option value="movies">Movies</option>
         <option value="music">Music</option>
         <option value="travel">Travel</option>
-         <option value="Sleeping">Sleeping</option>
+         <option value="sleeping">Sleeping</option>
           <option value="meetup">Meetup</option>
-           <option value="Sex">Sex</option>
+           <option value="sex">Sex</option>
         <option value="gaming">Gaming</option>
       </select>
-      <textarea id="bio" rows="3" placeholder=""></textarea>
+      <textarea id="bio" rows="3" placeholder="Tell us about yourself..."></textarea>
       <button id="saveBtn">Save Profile</button>
       <button id="cancelBtn">Cancel</button>
     </div>
@@ -526,24 +523,24 @@ contact{
 </div>
 
 <button id="floatingChatBtn"><i class="fa-solid fa-comments"></i></button>
-<br><contact>Contact us <br>
 <br>
-<div class="arr">
-<a href="https://whatsapp.com/channel/0029VbB9CN5ICVfpcjNHGq0V" target="_blank" class="whatsapp-icon">
+<div class="contact-card">
+    Contact us <br>
+    <br>
+    <div class="arr">
+        <a href="https://whatsapp.com/channel/0029VbB9CN5ICVfpcjNHGq0V" target="_blank" class="whatsapp-icon">
             <i class="fa fa-whatsapp" style="font-size:40px; color:#373; text-shadow:2px 3px 2px black; margin-left:81px;"></i> 
         </a>
-        
-            <a href="https://www.instagram.com/ruysteve/?utm_source=ig_web_button_share_sheet" target="_blank" class="instagram-icon">
-    <i class="fa fa-instagram insta-gradient-icon" style="font-size:40px; margin-left:50px;"></i>
-</a>
-
+        <a href="https://www.instagram.com/ruysteve/?utm_source=ig_web_button_share_sheet" target="_blank" class="instagram-icon">
+            <i class="fa fa-instagram insta-gradient-icon" style="font-size:40px; margin-left:50px;"></i>
         </a>
-        </div>
-        </contact>
+    </div>
+</div>
 <script>
 const SUPABASE_URL = "https://vfbjwkfurleatfdrabdg.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmYmp3a2Z1cmxlYXRmZHJhYmRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MjAwNDIsImV4cCI6MjA3Mjk5NjA0Mn0.hguIfyynGc19tsSm9u66qy5IeUv40_mE8-JBjqnOQBE";
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// FIX 1: Renamed 'supabase' to 'supabaseClient' to avoid identifier redeclaration error
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const loadingOverlay = document.getElementById("loadingOverlay");
 const viewProfile = document.getElementById("view-profile");
@@ -590,6 +587,7 @@ const saveBtn = document.getElementById("saveBtn");
 const cancelBtn = document.getElementById("cancelBtn");
 const profileStats = document.getElementById("profile-stats");
 
+// FIX 3: Corrected capitalization for sleeping and sex to match select values
 const interestIcons = {
   "coding": "fa-solid fa-code",
   "reading": "fa-solid fa-book",
@@ -599,9 +597,9 @@ const interestIcons = {
   "travel": "fa-solid fa-plane",
   "gaming": "fa-solid fa-gamepad",
   "meetup": "fa-solid fa-car",
-  "sleeping": "fa-solid fa-sleep",
-  "sex": "fa-solid fa-moon",
-  "fun": "fa-solid fa-party"
+  "sleeping": "fa-solid fa-bed", // Changed to a more appropriate icon
+  "sex": "fa-solid fa-mask", // Changed to a safer/more general icon
+  "fun": "fa-solid fa-gift" // Changed to a more general icon
 };
 
 let profileIdToLoad;
@@ -645,7 +643,7 @@ cancelBtn.addEventListener("click", () => {
 
 // Logout
 document.getElementById("logoutBtn").addEventListener("click", async () => {
-  await supabase.auth.signOut();
+  await supabaseClient.auth.signOut(); // FIX: Use supabaseClient
   window.location.href = "index.html";
 });
 
@@ -674,10 +672,10 @@ function toggleEditView(isEditing) {
 
 // Function to fetch and display unread notifications count
 async function fetchNotifications() {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user } } = await supabaseClient.auth.getUser(); // FIX: Use supabaseClient
     if (!user) return;
 
-    const { count, error } = await supabase
+    const { count, error } = await supabaseClient // FIX: Use supabaseClient
         .from('notifications')
         .select('*', { count: 'exact', head: true })
         .eq('recipient_id', user.id)
@@ -701,7 +699,7 @@ async function loadProfile() {
   loadingOverlay.style.opacity = 1;
   loadingOverlay.style.display = "flex";
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await supabaseClient.auth.getUser(); // FIX: Use supabaseClient
   if (!user) { window.location.href = "index.html"; return; }
   currentUserId = user.id;
 
@@ -724,7 +722,7 @@ async function loadProfile() {
 
   fetchNotifications();
 
-  let { data: profileData, error: profileError } = await supabase
+  let { data: profileData, error: profileError } = await supabaseClient // FIX: Use supabaseClient
     .from("profiles")
     .select("*")
     .eq("user_id", profileIdToLoad)
@@ -766,14 +764,14 @@ async function loadProfile() {
     viewEmailEl.textContent = "";
   }
 
-  const { count: postsCount } = await supabase
+  const { count: postsCount } = await supabaseClient // FIX: Use supabaseClient
     .from('posts')
     .select('*', { count: 'exact', head: true })
     .eq('author_id', profileIdToLoad);
   document.getElementById("posts-count").textContent = postsCount || 0;
 
   // Update friends count based on accepted requests
-  const { count: friendsCount } = await supabase
+  const { count: friendsCount } = await supabaseClient // FIX: Use supabaseClient
     .from('friend_requests')
     .select('*', { count: 'exact', head: true })
     .or(`sender_id.eq.${profileIdToLoad},receiver_id.eq.${profileIdToLoad}`)
@@ -781,7 +779,7 @@ async function loadProfile() {
   friendsCountEl.textContent = friendsCount || 0;
 
 
-  const { count: likesCount } = await supabase
+  const { count: likesCount } = await supabaseClient // FIX: Use supabaseClient
     .from('profile_likes')
     .select('*', { count: 'exact', head: true })
     .eq('liked_profile_id', profileIdToLoad);
@@ -846,7 +844,7 @@ async function loadProfile() {
 async function updateFriendButton(profileIdToLoad, currentUserId) {
     if (profileIdToLoad === currentUserId) return;
 
-    let { data: request, error } = await supabase
+    let { data: request, error } = await supabaseClient // FIX: Use supabaseClient
         .from('friend_requests')
         .select('*')
         .or(`sender_id.eq.${currentUserId},receiver_id.eq.${profileIdToLoad}`)
@@ -894,7 +892,7 @@ async function updateFriendButton(profileIdToLoad, currentUserId) {
 
 
 saveBtn.addEventListener("click", async () => {
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await supabaseClient.auth.getUser(); // FIX: Use supabaseClient
   if (!user) { return showMessage("No user found."); }
 
   const selectedInterests = Array.from(interestsEl.options)
@@ -913,7 +911,7 @@ saveBtn.addEventListener("click", async () => {
     return showMessage("Please fill in your full name, gender, and age.");
   }
 
-  const { error } = await supabase.from("profiles").update(updates).eq("user_id", user.id);
+  const { error } = await supabaseClient.from("profiles").update(updates).eq("user_id", user.id); // FIX: Use supabaseClient
   if (error) {
     showMessage("Save failed: " + error.message);
   } else {
@@ -936,7 +934,7 @@ profileUploadEl.addEventListener("change", (e) => {
     maxWidth: 800,
     maxHeight: 800,
     success: async (compressedFile) => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = await supabaseClient.auth.getUser(); // FIX: Use supabaseClient
       if (!user) {
         uploadStatusEl.textContent = "Please log in to upload an image.";
         uploadLabel.style.display = "flex";
@@ -947,16 +945,16 @@ profileUploadEl.addEventListener("change", (e) => {
       const fileName = `${user.id}.${fileExt}`;
       const filePath = `${user.id}/${fileName}`;
 
-      const { error: uploadError } = await supabase.storage.from("avatars").upload(filePath, compressedFile, { upsert: true });
+      const { error: uploadError } = await supabaseClient.storage.from("avatars").upload(filePath, compressedFile, { upsert: true }); // FIX: Use supabaseClient
 
       if (uploadError) {
         uploadStatusEl.textContent = "Image upload failed: " + uploadError.message;
       } else {
-        const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(filePath);
+        const { data: { publicUrl } } = supabaseClient.storage.from("avatars").getPublicUrl(filePath); // FIX: Use supabaseClient
 
         const newPublicUrl = `${publicUrl}?t=${new Date().getTime()}`;
 
-        const { error: updateErr } = await supabase.from("profiles").update({ avatar_url: newPublicUrl }).eq("user_id", user.id);
+        const { error: updateErr } = await supabaseClient.from("profiles").update({ avatar_url: newPublicUrl }).eq("user_id", user.id); // FIX: Use supabaseClient
 
         if (updateErr) {
           uploadStatusEl.textContent = "Failed to save avatar: " + updateErr.message;
@@ -988,7 +986,7 @@ closeModal.addEventListener("click", () => {
 });
 
 loveBtn.addEventListener("click", async () => {
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await supabaseClient.auth.getUser(); // FIX: Use supabaseClient
   if (!user) {
     return showMessage("Please log in to love a profile.");
   }
@@ -1000,7 +998,7 @@ loveBtn.addEventListener("click", async () => {
     return showMessage("Cannot love this profile. A user ID is missing.");
   }
 
-  const { error } = await supabase
+  const { error } = await supabaseClient // FIX: Use supabaseClient
     .from('profile_likes')
     .insert([
       { liker_id: user.id, liked_profile_id: likedProfileId }
@@ -1027,14 +1025,6 @@ unfriendBtn.addEventListener("click", async () => {
     await handleFriendAction(profileIdToLoad, 'unfriend');
 });
 
-floatingChatBtn.addEventListener("click", () => {
-    if (!isProfileComplete) {
-        showMessage("Please complete your profile first.");
-        return;
-    }
-    window.location.href = `chat.html?user_id=${profileIdToLoad}`;
-});
-
 // NEW: Friends count click handler
 friendsStat.addEventListener("click", async () => {
     friendsListModal.style.display = "flex";
@@ -1050,7 +1040,7 @@ closeFriendsModalBtn.addEventListener("click", () => {
 async function fetchAndDisplayFriends(profileId) {
     friendsListContainer.innerHTML = `<div class="placeholder-notification"></div><div class="placeholder-notification" style="width: 90%;"></div>`;
 
-    const { data: friendshipData, error: friendshipError } = await supabase
+    const { data: friendshipData, error: friendshipError } = await supabaseClient // FIX: Use supabaseClient
         .from('friend_requests')
         .select(`
             sender_id,
@@ -1129,7 +1119,7 @@ async function fetchAndDisplayFriends(profileId) {
 }
 
 async function fetchProfiles(ids) {
-    const { data: profiles, error } = await supabase
+    const { data: profiles, error } = await supabaseClient // FIX: Use supabaseClient
         .from('profiles')
         .select('*')
         .in('user_id', ids);
@@ -1142,7 +1132,7 @@ async function fetchProfiles(ids) {
 }
 
 async function fetchCurrentUsersFriends(userId) {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient // FIX: Use supabaseClient
         .from('friend_requests')
         .select(`sender_id, receiver_id`)
         .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
@@ -1163,7 +1153,7 @@ async function fetchCurrentUsersFriends(userId) {
 
 async function handleFriendAction(userId, action) {
     if (action === 'unfriend') {
-        const { error } = await supabase
+        const { error } = await supabaseClient // FIX: Use supabaseClient
             .from('friend_requests')
             .delete()
             .or(`and(sender_id.eq.${currentUserId},receiver_id.eq.${userId}),and(sender_id.eq.${userId},receiver_id.eq.${currentUserId})`);
@@ -1175,7 +1165,7 @@ async function handleFriendAction(userId, action) {
         }
     } else { // 'add' or 'accept'
         // Check if a request already exists
-        const { data: existingRequest, error: checkError } = await supabase
+        const { data: existingRequest, error: checkError } = await supabaseClient // FIX: Use supabaseClient
             .from('friend_requests')
             .select('*')
             .or(`sender_id.eq.${currentUserId},receiver_id.eq.${userId}`)
@@ -1194,7 +1184,7 @@ async function handleFriendAction(userId, action) {
                 return showMessage("Friend request already sent!");
             } else if (existingRequest.receiver_id === currentUserId) {
                 // Logic to accept the request
-                const { error: updateError } = await supabase
+                const { error: updateError } = await supabaseClient // FIX: Use supabaseClient
                     .from('friend_requests')
                     .update({ status: 'accepted' })
                     .eq('id', existingRequest.id);
@@ -1205,7 +1195,7 @@ async function handleFriendAction(userId, action) {
             }
         } else {
             // Send a new friend request
-            const { error: insertError } = await supabase
+            const { error: insertError } = await supabaseClient // FIX: Use supabaseClient
                 .from('friend_requests')
                 .insert({ sender_id: currentUserId, receiver_id: userId });
 
@@ -1213,14 +1203,14 @@ async function handleFriendAction(userId, action) {
                 return showMessage("Failed to send request: " + insertError.message);
             }
 
-            const { data: senderProfile } = await supabase
+            const { data: senderProfile } = await supabaseClient // FIX: Use supabaseClient
                 .from('profiles')
                 .select('full_name')
                 .eq('user_id', currentUserId)
                 .single();
 
             const message = `${senderProfile.full_name} sent you a friend request.`;
-            await supabase.from('notifications').insert({
+            await supabaseClient.from('notifications').insert({ // FIX: Use supabaseClient
                 recipient_id: userId,
                 sender_id: currentUserId,
                 type: 'friend_request',
@@ -1262,7 +1252,5 @@ floatingChatBtn.addEventListener("click", () => {
 
 loadProfile();
 </script>
-
 </body>
-</html>
 </html>

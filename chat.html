@@ -260,7 +260,6 @@ body {
   cursor: pointer;
   transition: background 0.2s;
   flex-shrink: 0;
-  margin-right:;
 }
 #sendMessageBtn:hover, #sendImageBtn:hover {
   background: #f59e0b;
@@ -394,9 +393,10 @@ body {
 </div>
 
 <script>
+// RENAME 'supabase' to 'supabaseClient' to avoid library conflicts
 const SUPABASE_URL="https://vfbjwkfurleatfdrabdg.supabase.co";
 const SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmYmp3a2Z1cmxlYXRmZHJhYmRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MjAwNDIsImV4cCI6MjA3Mjk5NjA0Mn0.hguIfyynGc19tsSm9u66qy5IeUv40_mE8-JBjqnOQBE";
-const supabase=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const friendsList=document.getElementById("friendsList");
 const chatMessages=document.getElementById("chatMessages");
@@ -431,7 +431,7 @@ let currentSendImageHandler = null;
 init();
 
 async function init(){
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) {
         window.location.href = "index.html";
         return;
@@ -461,7 +461,7 @@ async function init(){
 }
 
 async function openChatFromRoomId(roomId) {
-    const { data: room, error } = await supabase
+    const { data: room, error } = await supabaseClient
         .from('chat_rooms')
         .select('user1_id, user2_id')
         .eq('id', roomId)
@@ -477,7 +477,7 @@ async function openChatFromRoomId(roomId) {
 
     const chatPartnerId = room.user1_id === currentUserId ? room.user2_id : room.user1_id;
 
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: profileError } = await supabaseClient
         .from('profiles')
         .select('*')
         .eq('user_id', chatPartnerId)
@@ -501,7 +501,7 @@ async function openChatFromRoomId(roomId) {
 }
 
 async function fetchAndCachePremiumStatus(userId) {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from('profiles')
     .select('is_premium')
     .eq('user_id', userId)
@@ -562,7 +562,7 @@ menuBtn.addEventListener('click', () => {
 });
 
 logoutBtn.addEventListener('click', async () => {
-    await supabase.auth.signOut();
+    await supabaseClient.auth.signOut();
     localStorage.removeItem('premium_status_cache');
     window.location.href = "index.html";
 });
@@ -584,7 +584,7 @@ function createFriendItem(profile, lastMessage, unreadCount) {
 }
 
 async function loadFriends(){
-    const { data: friendships, error: friendsError } = await supabase
+    const { data: friendships, error: friendsError } = await supabaseClient
         .from('friend_requests')
         .select('sender_id, receiver_id, status')
         .or(`sender_id.eq.${currentUserId},receiver_id.eq.${currentUserId}`)
@@ -605,7 +605,7 @@ async function loadFriends(){
         return;
     }
 
-    const { data: profiles, error: profilesError } = await supabase
+    const { data: profiles, error: profilesError } = await supabaseClient
         .from('profiles')
         .select('*')
         .in('user_id', friendIds);
@@ -618,7 +618,7 @@ async function loadFriends(){
     
     profiles.forEach(p => profilesMap.set(p.user_id, p));
 
-    const { data: messages, error: messagesError } = await supabase
+    const { data: messages, error: messagesError } = await supabaseClient
         .from('messages')
         .select('*')
         .or(`sender_id.eq.${currentUserId},receiver_id.eq.${currentUserId}`)
@@ -749,9 +749,8 @@ async function openChat(friendId, isNewChat = false){
   }, 4000);
 }
 
-// New function to poll for new friend messages/requests
 async function pollForNewFriendsAndMessages() {
-  const { data: friendships, error: friendsError } = await supabase
+  const { data: friendships, error: friendsError } = await supabaseClient
     .from('friend_requests')
     .select('sender_id, receiver_id, status')
     .or(`sender_id.eq.${currentUserId},receiver_id.eq.${currentUserId}`)
@@ -766,7 +765,7 @@ async function pollForNewFriendsAndMessages() {
     f.sender_id === currentUserId ? f.receiver_id : f.sender_id
   ))];
 
-  const { data: messages, error: messagesError } = await supabase
+  const { data: messages, error: messagesError } = await supabaseClient
       .from('messages')
       .select('sender_id, receiver_id, created_at, content')
       .or(`sender_id.eq.${currentUserId},receiver_id.eq.${currentUserId}`)
@@ -792,18 +791,15 @@ async function pollForNewFriendsAndMessages() {
       }
   }
 
-  // Update existing friend items or add new ones
   friendIds.forEach(id => {
       const friendItem = document.querySelector(`.friend-item[data-user-id="${id}"]`);
       if (friendItem) {
-          // Update last message
           let lastMessageText = lastMessages[id] || "No messages yet.";
           if (lastMessageText.startsWith('[IMAGE]')) {
               lastMessageText = 'Image sent.';
           }
           friendItem.querySelector('.friend-info p').textContent = lastMessageText;
 
-          // Update unread count
           const unreadCount = unreadCounts[id] || 0;
           const unreadBadge = friendItem.querySelector('.unread-badge');
           unreadBadge.textContent = unreadCount;
@@ -811,10 +807,8 @@ async function pollForNewFriendsAndMessages() {
       }
   });
 
-  // Re-load the whole list if there are new friends (not just new messages)
   const existingFriendIds = Array.from(document.querySelectorAll('.friend-item')).map(el => el.dataset.userId);
   if (friendIds.length !== existingFriendIds.length) {
-      // New friend added, re-render the whole list to show it
       loadFriends();
   }
 }
@@ -823,18 +817,18 @@ function startFriendsListPolling() {
   if (friendsListPollingInterval) {
     clearInterval(friendsListPollingInterval);
   }
-  friendsListPollingInterval = setInterval(pollForNewFriendsAndMessages, 5000); // Poll every 5 seconds
+  friendsListPollingInterval = setInterval(pollForNewFriendsAndMessages, 5000); 
 }
 
 
 async function createFriendship(user1, user2) {
-    const { data: existingFriendship, error } = await supabase
+    const { data: existingFriendship, error } = await supabaseClient
         .from('friend_requests')
         .select('id')
         .or(`and(sender_id.eq.${user1},receiver_id.eq.${user2}),and(sender_id.eq.${user2},receiver_id.eq.${user1})`);
     
     if (existingFriendship.length === 0) {
-        const { error: insertError } = await supabase
+        const { error: insertError } = await supabaseClient
             .from('friend_requests')
             .insert({ sender_id: user1, receiver_id: user2, status: 'accepted' });
         
@@ -856,7 +850,7 @@ function saveNotification(senderName, content) {
 }
 
 async function loadMessages(friendId) {
-    const { data: msgs, error } = await supabase.from('messages')
+    const { data: msgs, error } = await supabaseClient.from('messages')
         .select('*')
         .or(`and(sender_id.eq.${currentUserId},receiver_id.eq.${friendId}),and(sender_id.eq.${friendId},receiver_id.eq.${currentUserId})`)
         .order('created_at', { ascending: true });
@@ -886,7 +880,7 @@ async function loadMessages(friendId) {
 }
 
 async function pollForNewMessages(friendId) {
-    const { data: newMsgs, error } = await supabase.from('messages')
+    const { data: newMsgs, error } = await supabaseClient.from('messages')
         .select('*')
         .or(`and(sender_id.eq.${currentUserId},receiver_id.eq.${friendId}),and(sender_id.eq.${friendId},receiver_id.eq.${currentUserId})`)
         .gt('created_at', lastMessageTimestamp || '1970-01-01T00:00:00Z')
@@ -1005,7 +999,7 @@ async function sendImage(file) {
         const compressedFile = await compressImage(file, 0.4);
         const filePath = `${currentUserId}/${Date.now()}-${file.name}`;
         
-        const { error } = await supabase.storage
+        const { error } = await supabaseClient.storage
             .from('chat-images')
             .upload(filePath, compressedFile);
 
@@ -1015,7 +1009,7 @@ async function sendImage(file) {
             return;
         }
 
-        const { data: { publicUrl } } = supabase.storage
+        const { data: { publicUrl } } = supabaseClient.storage
             .from('chat-images')
             .getPublicUrl(filePath);
 
@@ -1051,7 +1045,7 @@ async function sendMessage(){
 }
 
 async function insertMessage(content) {
-    const { data, error } = await supabase.from('messages').insert({
+    const { data, error } = await supabaseClient.from('messages').insert({
         sender_id: currentUserId,
         receiver_id: currentFriendId,
         content: content
@@ -1089,7 +1083,7 @@ function updateLastMessageInList(message) {
 }
 
 async function markRead(fid){
-  await supabase.from('messages')
+  await supabaseClient.from('messages')
      .update({read_status:true})
      .eq('sender_id',fid)
      .eq('receiver_id',currentUserId)

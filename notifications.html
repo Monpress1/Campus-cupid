@@ -204,32 +204,19 @@
     </div>
 
     <script>
+        // --- Supabase and Global Utility Initialization ---
         const SUPABASE_URL = "https://vfbjwkfurleatfdrabdg.supabase.co";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmYmp3a2Z1cmxlYXRmZHJhYmRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MjAwNDIsImV4cCI6MjA3Mjk5NjA0Mn0.hguIfyynGc19tsSm9u66qy5IeUv40_mE8-JBjqnOQBE";
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // Corrected variable name to supabaseClient to prevent "already declared" error
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         
+        // --- Element Declarations ---
         const notificationList = document.getElementById('notificationList');
         const noNotificationsEl = document.getElementById('noNotifications');
         
         let currentUser = null;
 
-        document.addEventListener('DOMContentLoaded', async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) {
-                window.location.href = 'index.html';
-                return;
-            }
-            currentUser = user;
-            
-            // Mark all notifications as read on page load
-            await supabase
-                .from('notifications')
-                .update({ read_status: true })
-                .eq('recipient_id', currentUser.id)
-                .eq('read_status', false);
-
-            fetchAndDisplayNotifications();
-        });
+        // --- Utility Functions ---
 
         // Helper to format time
         function timeAgo(dateString) {
@@ -250,12 +237,14 @@
             return Math.floor(seconds) + " seconds ago";
         }
 
+        // --- Main Logic: Fetching and Displaying ---
+
         async function fetchAndDisplayNotifications() {
             // Remove placeholders
             document.querySelectorAll('.placeholder-notification').forEach(el => el.remove());
 
             // Fetch notifications, including related_id
-            const { data: notifications, error } = await supabase
+            const { data: notifications, error } = await supabaseClient
                 .from('notifications')
                 .select(`id, type, message, read_status, created_at, sender_id, related_id`)
                 .eq('recipient_id', currentUser.id)
@@ -263,6 +252,7 @@
 
             if (error) {
                 console.error('Error fetching notifications:', error.message);
+                notificationList.innerHTML = `<p style="color: #ef4444; text-align: center;">Error loading notifications.</p>`;
                 return;
             }
 
@@ -272,18 +262,19 @@
                 return;
             }
 
-            const senderIds = [...new Set(notifications.map(n => n.sender_id))];
-            const { data: profiles, error: profileError } = await supabase
+            // Batch fetch sender profiles
+            const senderIds = [...new Set(notifications.map(n => n.sender_id).filter(id => id))]; // Filter out null sender_id
+            const { data: profiles, error: profileError } = await supabaseClient
                 .from('profiles')
                 .select('user_id, full_name, avatar_url')
                 .in('user_id', senderIds);
             
             if (profileError) {
                 console.error("Error fetching profiles:", profileError.message);
-                return;
+                // Proceed without profiles if there's an error
             }
 
-            const profileMap = new Map(profiles.map(p => [p.user_id, p]));
+            const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
 
             noNotificationsEl.style.display = 'none';
 
@@ -298,35 +289,36 @@
                 const avatar = senderProfile?.avatar_url;
                 const senderName = senderProfile?.full_name || 'A user';
 
-                let avatarHtml = `<div class="notification-avatar-placeholder"><i class="fa-solid fa-user"></i></div>`;
+                let avatarHtml = `<div class="notification-avatar-placeholder" title="${senderName}"><i class="fa-solid fa-user"></i></div>`;
                 if (avatar) {
                     avatarHtml = `<img src="${avatar}" alt="User Avatar" class="notification-avatar">`;
                 }
 
                 let notificationMessage = '';
+                // Determine message based on type
                 switch (notification.type) {
                     case 'post_liked':
-                        notificationMessage = `${senderName} liked your post.`;
+                        notificationMessage = `<strong>${senderName}</strong> liked your post.`;
                         break;
                     case 'post_commented':
-                        notificationMessage = notification.message;
+                        notificationMessage = `<strong>${senderName}</strong> commented: "${notification.message}"`;
                         break;
                     case 'friend_post':
-                        notificationMessage = `${senderName} posted something new.`;
+                        notificationMessage = `<strong>${senderName}</strong> posted something new.`;
                         break;
                     case 'friend_request':
-                        notificationMessage = `${senderName} sent you a friend request.`;
+                        notificationMessage = `<strong>${senderName}</strong> sent you a friend request.`;
                         break;
                     default:
-                        notificationMessage = notification.message;
+                        notificationMessage = notification.message || 'New activity on your account.';
                 }
 
                 let actionsHtml = '';
                 if (notification.type === 'friend_request') {
                     actionsHtml = `
-                        <div class="notification-actions">
-                            <button class="accept-btn" data-sender-id="${notification.sender_id}" data-notification-id="${notification.id}">Accept</button>
-                            <button class="reject-btn" data-sender-id="${notification.sender_id}" data-notification-id="${notification.id}">Reject</button>
+                        <div class="notification-actions" data-notification-id="${notification.id}">
+                            <button class="accept-btn" data-sender-id="${notification.sender_id}">Accept</button>
+                            <button class="reject-btn" data-sender-id="${notification.sender_id}">Reject</button>
                         </div>
                     `;
                 }
@@ -346,10 +338,11 @@
             // Add event listeners for all notification items
             document.querySelectorAll('.notification-item').forEach(item => {
                 const notification = JSON.parse(item.dataset.notification);
-                // Attach a click event listener only if it's not a friend request
+                
+                // Only non-friend-request notifications should redirect
                 if (notification.type !== 'friend_request') {
                     item.addEventListener('click', () => {
-                        handleNotificationClick(notification);
+                        handleNotificationClick(item, notification);
                     });
                 }
             });
@@ -357,61 +350,73 @@
             // Add event listeners for new buttons
             document.querySelectorAll('.accept-btn').forEach(button => {
                 button.addEventListener('click', async (event) => {
-                    event.stopPropagation(); // Prevents click from bubbling up to parent
+                    event.stopPropagation();
                     const senderId = event.target.dataset.senderId;
-                    const notificationId = event.target.dataset.notificationId;
-                    await handleFriendRequest(senderId, notificationId, 'accepted');
+                    const notificationItem = event.target.closest('.notification-item');
+                    const notificationId = JSON.parse(notificationItem.dataset.notification).id;
+                    await handleFriendRequest(senderId, notificationId, 'accepted', notificationItem);
                 });
             });
 
             document.querySelectorAll('.reject-btn').forEach(button => {
                 button.addEventListener('click', async (event) => {
-                    event.stopPropagation(); // Prevents click from bubbling up to parent
+                    event.stopPropagation();
                     const senderId = event.target.dataset.senderId;
-                    const notificationId = event.target.dataset.notificationId;
-                    await handleFriendRequest(senderId, notificationId, 'rejected');
+                    const notificationItem = event.target.closest('.notification-item');
+                    const notificationId = JSON.parse(notificationItem.dataset.notification).id;
+                    await handleFriendRequest(senderId, notificationId, 'rejected', notificationItem);
                 });
             });
         }
 
-        async function handleFriendRequest(senderId, notificationId, status) {
+        // --- Action Handlers ---
+
+        async function handleFriendRequest(senderId, notificationId, status, notificationElement) {
             // Find the friend request in the friend_requests table
-            const { data: request, error: fetchError } = await supabase
+            const { data: request, error: fetchError } = await supabaseClient
                 .from('friend_requests')
-                .select('*')
+                .select('id')
                 .eq('sender_id', senderId)
                 .eq('receiver_id', currentUser.id)
                 .single();
 
-            if (fetchError) {
+            if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 means 'No rows found'
                 console.error('Error fetching friend request:', fetchError.message);
                 return;
             }
+            
+            if (!request) {
+                console.warn('Friend request not found, possibly already processed.');
+            }
 
             if (status === 'accepted') {
-                const { error: updateError } = await supabase
-                    .from('friend_requests')
-                    .update({ status: 'accepted' })
-                    .eq('id', request.id);
+                if (request) {
+                    const { error: updateError } = await supabaseClient
+                        .from('friend_requests')
+                        .update({ status: 'accepted' })
+                        .eq('id', request.id);
 
-                if (updateError) {
-                    console.error('Error accepting request:', updateError.message);
-                    return;
+                    if (updateError) {
+                        console.error('Error accepting request:', updateError.message);
+                        return;
+                    }
                 }
             } else if (status === 'rejected') {
-                const { error: deleteError } = await supabase
-                    .from('friend_requests')
-                    .delete()
-                    .eq('id', request.id);
+                if (request) {
+                    const { error: deleteError } = await supabaseClient
+                        .from('friend_requests')
+                        .delete()
+                        .eq('id', request.id);
 
-                if (deleteError) {
-                    console.error('Error rejecting request:', deleteError.message);
-                    return;
+                    if (deleteError) {
+                        console.error('Error rejecting request:', deleteError.message);
+                        return;
+                    }
                 }
             }
 
             // Delete the notification record from the database
-            const { error: notificationError } = await supabase
+            const { error: notificationError } = await supabaseClient
                 .from('notifications')
                 .delete()
                 .eq('id', notificationId);
@@ -419,11 +424,10 @@
             if (notificationError) {
                 console.error('Error deleting notification:', notificationError.message);
             }
-
-            // Remove the notification from the list after processing
-            const notificationElement = document.querySelector(`[data-notification-id="${notificationId}"]`);
+            
+            // Remove the UI element
             if (notificationElement) {
-                notificationElement.closest('.notification-item').remove();
+                notificationElement.remove();
             }
 
             if (notificationList.children.length === 0) {
@@ -431,30 +435,55 @@
             }
         }
 
-        async function handleNotificationClick(notification) {
+        async function handleNotificationClick(itemElement, notification) {
             // Check if the notification has a related_id (like/comment/post)
             if (notification.related_id) {
-                // Mark the notification as read
+                // Mark the notification as read in the DB
                 await markNotificationAsRead(notification.id);
                 
-                // Redirect the user to the feed page, with the post ID in the URL
+                // Update UI instantly
+                itemElement.classList.remove('unread');
+                
+                // Redirect the user to the feed page, with the post ID in the URL for scrolling
                 window.location.href = `feed.html?post_id=${notification.related_id}`;
             }
         }
 
         async function markNotificationAsRead(notificationId) {
-            const { error } = await supabase
+            const { error } = await supabaseClient
                 .from('notifications')
                 .update({ read_status: true })
-                .eq('id', notificationId)
-                .select();
+                .eq('id', notificationId);
 
             if (error) {
                 console.error("Error marking notification as read:", error.message);
-            } else {
-                console.log("Notification marked as read:", notificationId);
             }
         }
+
+        // --- Initialization ---
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            // FIX: Use getSession() to reliably retrieve the session state immediately on page load.
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            
+            if (session) {
+                // If the session exists, set the user and proceed.
+                currentUser = session.user;
+                
+                // Mark ALL unread notifications as read on page load via a single query
+                await supabaseClient
+                    .from('notifications')
+                    .update({ read_status: true })
+                    .eq('recipient_id', currentUser.id)
+                    .eq('read_status', false);
+
+                fetchAndDisplayNotifications();
+            } else {
+                // If no valid session, redirect.
+                window.location.href = 'index.html';
+                return;
+            }
+        });
     </script>
 </body>
 </html>

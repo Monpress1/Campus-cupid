@@ -121,7 +121,6 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* NEW: Ad Post Page Styles */
         .ad-form-card {
             background: rgba(255,255,255,0.08);
             backdrop-filter: blur(10px);
@@ -334,9 +333,10 @@
     <script>
         const SUPABASE_URL = "https://vfbjwkfurleatfdrabdg.supabase.co";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmYmp3a2Z1cmxlYXRmZHJhYmRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MjAwNDIsImV4cCI6MjA3Mjk5NjA0Mn0.hguIfyynGc19tsSm9u66qy5IeUv40_mE8-JBjqnOQBE";
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        
+        // Renamed to supabaseClient to avoid conflict
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // Corrected variable declarations to match HTML IDs
         const adTitleInput = document.getElementById('ad-title');
         const adContentInput = document.getElementById('ad-content');
         const adUrlInput = document.getElementById('ad-url');
@@ -345,7 +345,7 @@
         const imagePreviewDiv = document.getElementById('image-preview');
         const previewFileNameSpan = document.getElementById('preview-file-name');
         const removeImageBtn = document.getElementById('remove-image');
-        const adFormCard = document.getElementById('ad-form-card'); // Corrected
+        const adFormCard = document.getElementById('ad-form-card');
         const premiumMessageDiv = document.getElementById('premium-message');
         const loadingOverlay = document.getElementById('loading-overlay');
         const customAlert = document.getElementById('customAlert');
@@ -362,26 +362,24 @@
             setTimeout(() => { customAlert.classList.remove('show'); }, 3000);
         }
 
-        // --- Menu & Auth Logic ---
         document.getElementById("menuBtn").addEventListener("click", () => {
             const menu = document.getElementById("menuContent");
             menu.style.display = menu.style.display === "block" ? "none" : "block";
         });
         document.getElementById("logoutBtn").addEventListener("click", async () => {
-            await supabase.auth.signOut();
+            await supabaseClient.auth.signOut();
             window.location.href = "index.html";
         });
 
-        // --- Check Premium Status ---
         async function checkPremiumStatusAndRender() {
             showLoading();
-            const { data: { user } } = await supabase.auth.getUser();
+            const { data: { user } } = await supabaseClient.auth.getUser();
             if (!user) {
                 window.location.href = "index.html";
                 return;
             }
 
-            const { data: profile, error } = await supabase
+            const { data: profile, error } = await supabaseClient
                 .from('profiles')
                 .select('is_premium')
                 .eq('user_id', user.id)
@@ -410,7 +408,6 @@
             hideLoading();
         }
 
-        // --- Image Upload Preview & Removal ---
         adImageUploadInput.addEventListener('change', (event) => {
             const file = event.target.files[0];
             if (file) {
@@ -429,7 +426,6 @@
             imagePreviewDiv.style.display = 'none';
         });
 
-        // --- Submit Ad Logic ---
         submitAdBtn.addEventListener('click', async () => {
             const title = adTitleInput.value.trim();
             const content = adContentInput.value.trim();
@@ -445,7 +441,7 @@
             showLoading();
 
             try {
-                const { data: { user } } = await supabase.auth.getUser();
+                const { data: { user } } = await supabaseClient.auth.getUser();
                 let imageUrl = null;
 
                 if (currentImageFile) {
@@ -453,7 +449,6 @@
                     const fileName = `${user.id}/${Date.now()}.${fileExt}`;
                     const filePath = `ad_media/${fileName}`;
 
-                    // Compress image before upload
                     const compressedImage = await new Promise((resolve, reject) => {
                         new Compressor(currentImageFile, {
                             quality: 0.6,
@@ -464,18 +459,17 @@
                         });
                     });
 
-                    const { data: uploadData, error: uploadError } = await supabase.storage
+                    const { data: uploadData, error: uploadError } = await supabaseClient.storage
                         .from('ad_media')
                         .upload(filePath, compressedImage, { upsert: false });
                     
                     if (uploadError) throw new Error("Image upload failed: " + uploadError.message);
 
-                    const { data: publicUrlData } = supabase.storage.from('ad_media').getPublicUrl(filePath);
+                    const { data: publicUrlData } = supabaseClient.storage.from('ad_media').getPublicUrl(filePath);
                     imageUrl = publicUrlData.publicUrl;
                 }
 
-                // Insert the new ad into the 'ads' table
-                const { error: adError } = await supabase.from('ads').insert({
+                const { error: adError } = await supabaseClient.from('ads').insert({
                     advertiser_id: user.id,
                     title: title,
                     content: content,
@@ -487,7 +481,6 @@
                 if (adError) throw new Error("Failed to post ad: " + adError.message);
 
                 showAlert("Your ad has been posted successfully!");
-                // Clear the form
                 adTitleInput.value = '';
                 adContentInput.value = '';
                 adUrlInput.value = '';
@@ -503,7 +496,6 @@
             }
         });
 
-        // --- Initial Check ---
         checkPremiumStatusAndRender();
     </script>
 </body>

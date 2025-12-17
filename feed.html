@@ -758,24 +758,45 @@
     </div>
     <div class="custom-alert" id="customAlert"></div>
 
-    <script>
-        // --- Supabase and Element Initialization ---
+        <script>
+        
+// --- Supabase and Global Utility Initialization ---
 const SUPABASE_URL = "https://vfbjwkfurleatfdrabdg.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmYmp3a2Z1cmxlYXRmZHJhYmRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MjAwNDIsImV4cCI6MjA3Mjk5NjA0Mn0.hguIfyynGc19tsSm9u66qy5IeUv40_mE8-JBjqnOQBE";
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY); // Renamed to avoid redeclaration error
 
 
-const feedContainer = document.getElementById('feed');
-const postContentInput = document.getElementById('postContent');
-const postMediaUploadInput = document.getElementById('postMediaUpload');
-const submitPostBtn = document.getElementById('submitPostBtn');
-const postPreview = document.getElementById('postPreview');
-const previewFileName = document.getElementById('previewFileName');
-const removeMediaBtn = document.getElementById('removeMedia');
-const notificationBadge = document.getElementById('notificationBadge');
-const notificationBadgeMenu = document.getElementById('notificationBadgeMenu');
+// --- Element Declarations (Grouping all document.getElementById calls) ---
+
+// UI & Alert
 const loadingOverlay = document.getElementById('loading-overlay');
 const customAlert = document.getElementById('customAlert');
+const installBtn = document.getElementById('installBtn');
+
+// Navbar
+const menuBtn = document.getElementById("menuBtn");
+const menuContent = document.getElementById("menuContent");
+const logoutBtn = document.getElementById("logoutBtn");
+
+// Search & Profile Elements
+const myProfileLink = document.getElementById('myProfileLink');
+const myProfileAvatar = document.getElementById('myProfileAvatar');
+const searchInput = document.getElementById('searchInput');
+const searchBtn = document.getElementById('searchBtn');
+
+// Feed Container
+const feedContainer = document.getElementById('feed');
+
+// Post Creation UI Elements
+const floatingPostBtn = document.getElementById('floatingPostBtn');
+const postModalOverlay = document.getElementById('postModalOverlay');
+const closePostModalBtn = document.getElementById('closePostModalBtn');
+const postContentInput = document.getElementById('postContent');
+const postMediaUploadInput = document.getElementById('postMediaUpload');
+const postPreview = document.getElementById('postPreview');
+const previewFileName = document.getElementById('previewFileName'); 
+const removeMediaBtn = document.getElementById('removeMedia');
+const submitPostBtn = document.getElementById('submitPostBtn');
 
 // Media Modal Elements
 const mediaModal = document.getElementById('mediaModal');
@@ -788,22 +809,18 @@ const fullPostModal = document.getElementById('fullPostModal');
 const modalPostContainer = document.getElementById('modalPostContainer');
 const closeFullPostModalBtn = document.getElementById('closeFullPostModal');
 
-// New Search & Profile Elements
-const myProfileLink = document.getElementById('myProfileLink');
-const myProfileAvatar = document.getElementById('myProfileAvatar');
-const searchInput = document.getElementById('searchInput');
-const searchBtn = document.getElementById('searchBtn');
-
-// New "People You Know" Elements for Glide Motion
+// "People You Know" Elements
 const suggestedFriendsContainer = document.getElementById('suggestedFriendsContainer');
 const suggestedFriendsWrapper = document.getElementById('suggestedFriendsWrapper');
 const suggestedFriendsSection = document.getElementById('suggestedFriendsSection');
-const feed = document.getElementById('feed');
-const originalFeedHtml = feed.innerHTML; 
-let allPostsAndComments = [];
-let isFFmpegLoaded = false;
-let ffmpeg;
 
+
+// --- Global State Variables ---
+let isFFmpegLoaded = false;
+let ffmpeg; // FFmpeg instance
+
+let originalFeedHtml = feedContainer.innerHTML;
+let allPostsAndComments = []; 
 let currentFile = null;
 
 // --- Pagination for Feed ---
@@ -819,7 +836,6 @@ let myProfileData = null;
 
 // --- PWA Installation Prompt ---
 let deferredPrompt;
-const installBtn = document.getElementById('installBtn');
 
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
@@ -881,7 +897,7 @@ function showAlert(message, isError = false) {
     }, 6000);
 }
 
-// --- Utility Functions (TimeAgo, shuffleArray, fetchNotifications) ---
+// --- Utility Functions (TimeAgo, shuffleArray, fetchNotifications, loadFFmpeg) ---
 function timeAgo(dateString) {
     const now = new Date();
     const past = new Date(dateString);
@@ -900,7 +916,7 @@ function timeAgo(dateString) {
     return Math.floor(seconds) + " seconds ago";
 }
 
-// NEW: Function to shuffle an array (Fisher-Yates algorithm)
+// Function to shuffle an array (Fisher-Yates algorithm)
 function shuffleArray(array) {
     for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -909,10 +925,10 @@ function shuffleArray(array) {
 }
 
 async function fetchNotifications() {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) return;
 
-    const { count, error } = await supabase
+    const { count, error } = await supabaseClient
         .from('notifications')
         .select('*', { count: 'exact', head: true })
         .eq('recipient_id', user.id)
@@ -935,6 +951,7 @@ async function fetchNotifications() {
         menuBadge.style.display = 'none';
     }
 }
+
 async function loadFFmpeg() {
     if (isFFmpegLoaded) return;
     try {
@@ -948,6 +965,7 @@ async function loadFFmpeg() {
         showAlert("Failed to load video processor. Video features will be disabled.", true);
     }
 }
+
 // --- Menu Toggle ---
 document.getElementById("menuBtn").addEventListener("click", () => {
     const menu = document.getElementById("menuContent");
@@ -956,7 +974,7 @@ document.getElementById("menuBtn").addEventListener("click", () => {
 
 // --- Logout Functionality ---
 document.getElementById("logoutBtn").addEventListener("click", async () => {
-    await supabase.auth.signOut();
+    await supabaseClient.auth.signOut();
     window.location.href = "index.html";
 });
 
@@ -1023,7 +1041,7 @@ submitPostBtn.addEventListener('click', async () => {
     submitPostBtn.textContent = "Posting...";
 
     try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { user } } = await supabaseClient.auth.getUser();
         if (!user) {
             showAlert("You must be logged in to post.", true);
             window.location.href = "index.html";
@@ -1033,7 +1051,7 @@ submitPostBtn.addEventListener('click', async () => {
         // --- Post Count Restriction for non-premium users
         if (!isPremiumUser) {
             const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-            const { count, error } = await supabase
+            const { count, error } = await supabaseClient
                 .from('posts')
                 .select('*', { count: 'exact', head: true })
                 .eq('author_id', user.id)
@@ -1094,13 +1112,13 @@ submitPostBtn.addEventListener('click', async () => {
                 }
             }
 
-            const { data: uploadData, error: uploadError } = await supabase.storage
+            const { data: uploadData, error: uploadError } = await supabaseClient.storage
                 .from('post_media')
                 .upload(filePath, fileToUpload, { upsert: false });
 
             if (uploadError) throw new Error("Media upload failed: " + uploadError.message);
 
-            const { data: publicUrlData } = supabase.storage.from('post_media').getPublicUrl(filePath);
+            const { data: publicUrlData } = supabaseClient.storage.from('post_media').getPublicUrl(filePath);
             if (fileType === 'images') {
                 imageUrl = publicUrlData.publicUrl;
             } else {
@@ -1108,7 +1126,7 @@ submitPostBtn.addEventListener('click', async () => {
             }
         }
 
-        const { error: postError } = await supabase.from('posts').insert({
+        const { error: postError } = await supabaseClient.from('posts').insert({
             author_id: user.id,
             content: postContent,
             image_url: imageUrl,
@@ -1131,6 +1149,7 @@ submitPostBtn.addEventListener('click', async () => {
         submitPostBtn.textContent = "Post";
     }
 });
+
 
 // --- Render Post Function ---
 async function renderPost(post, currentUserId, userProfilesMap, likesMap, commentsMap) {
@@ -1205,7 +1224,7 @@ async function renderPost(post, currentUserId, userProfilesMap, likesMap, commen
     postCard.querySelector('.comment-btn').addEventListener('click', async (e) => {
         e.preventDefault();
         const postId = e.currentTarget.dataset.postId;
-        const { data: comments } = await supabase
+        const { data: comments } = await supabaseClient
             .from('comments')
             .select(`
                 id,
@@ -1384,7 +1403,7 @@ suggestedFriendsContainer.addEventListener('touchmove', (e) => {
 
 // REVISED: renderSuggestedFriends function for randomization
 async function renderSuggestedFriends(currentUserId) {
-    const { data: friends } = await supabase
+    const { data: friends } = await supabaseClient
         .from('friend_requests')
         .select('sender_id,receiver_id')
         .or(`sender_id.eq.${currentUserId},receiver_id.eq.${currentUserId}`)
@@ -1398,7 +1417,7 @@ async function renderSuggestedFriends(currentUserId) {
     }
 
     // Fetch a larger pool of non-friends (e.g., 100)
-    const { data: profiles } = await supabase
+    const { data: profiles } = await supabaseClient
         .from('profiles')
         .select('user_id,full_name,avatar_url')
         .not('user_id', 'in', `(${Array.from(friendIds).join(',')})`)
@@ -1448,14 +1467,14 @@ async function loadFeed(page = 1, append = false, searchTerm = null) {
         hasMorePosts = true;
     }
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) {
         window.location.href = "index.html";
         return;
     }
     
     // Fetch user profile and check premium status
-    const { data: profile } = await supabase
+    const { data: profile } = await supabaseClient
         .from('profiles')
         .select('is_premium, avatar_url')
         .eq('user_id', user.id)
@@ -1472,7 +1491,7 @@ async function loadFeed(page = 1, append = false, searchTerm = null) {
     if (!searchTerm) {
         // NOTE: This section is inefficient and downloads ALL posts. 
         // A better approach is to use .range() on the Supabase query for actual pagination.
-        const { data: posts, error: postsError } = await supabase
+        const { data: posts, error: postsError } = await supabaseClient
             .from('posts')
             .select('*')
             .order('created_at', { ascending: false });
@@ -1484,7 +1503,7 @@ async function loadFeed(page = 1, append = false, searchTerm = null) {
             return;
         }
         allPosts = posts || [];
-        const { data: ads } = await supabase.from('ads').select('*').eq('is_active', true).order('created_at', { ascending: false });
+        const { data: ads } = await supabaseClient.from('ads').select('*').eq('is_active', true).order('created_at', { ascending: false });
         allAds = ads || [];
         renderSuggestedFriends(user.id);
         suggestedFriendsSection.style.display = 'block';
@@ -1493,9 +1512,9 @@ async function loadFeed(page = 1, append = false, searchTerm = null) {
         
         // Execute all three search queries in parallel to find matching post IDs
         const [postsWithContent, commentsFound, profilesFound] = await Promise.all([
-            supabase.from('posts').select('id').ilike('content', searchQuery),
-            supabase.from('comments').select('post_id').ilike('comment_text', searchQuery),
-            supabase.from('profiles').select('user_id').ilike('full_name', searchQuery),
+            supabaseClient.from('posts').select('id').ilike('content', searchQuery),
+            supabaseClient.from('comments').select('post_id').ilike('comment_text', searchQuery),
+            supabaseClient.from('profiles').select('user_id').ilike('full_name', searchQuery),
         ]);
 
         const postIds = new Set();
@@ -1506,13 +1525,13 @@ async function loadFeed(page = 1, append = false, searchTerm = null) {
         if (profilesFound.data) {
             const userIds = profilesFound.data.map(p => p.user_id);
             if (userIds.length > 0) {
-                const { data: userPosts } = await supabase.from('posts').select('id').in('author_id', userIds);
+                const { data: userPosts } = await supabaseClient.from('posts').select('id').in('author_id', userIds);
                 if (userPosts) userPosts.forEach(p => postIds.add(p.id));
             }
         }
         
         // Fetch full posts for the unique IDs found
-        const { data: posts, error: fetchPostsError } = await supabase
+        const { data: posts, error: fetchPostsError } = await supabaseClient
             .from('posts')
             .select('*')
             .in('id', Array.from(postIds))
@@ -1538,7 +1557,7 @@ async function loadFeed(page = 1, append = false, searchTerm = null) {
 
     const uniqueUserIds = new Set();
     postsToShow.forEach(post => uniqueUserIds.add(post.author_id));
-    const { data: profiles, error: profilesError } = await supabase
+    const { data: profiles, error: profilesError } = await supabaseClient
         .from('profiles')
         .select('user_id, full_name, avatar_url')
         .in('user_id', Array.from(uniqueUserIds));
@@ -1550,8 +1569,8 @@ async function loadFeed(page = 1, append = false, searchTerm = null) {
     if (postsToShow.length > 0) {
         const postIds = postsToShow.map(p => p.id);
         const [likesRes, commentsRes] = await Promise.all([
-            supabase.from('likes').select('*').in('post_id', postIds),
-            supabase.from('comments').select('post_id').in('post_id', postIds)
+            supabaseClient.from('likes').select('*').in('post_id', postIds),
+            supabaseClient.from('comments').select('post_id').in('post_id', postIds)
         ]);
         if (likesRes.data) likes.push(...likesRes.data);
         if (commentsRes.data) comments.push(...commentsRes.data);
@@ -1628,10 +1647,10 @@ async function loadFeed(page = 1, append = false, searchTerm = null) {
 
 // --- Like / Unlike Post Handler ---
 async function handleLike(postId, buttonElement) {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) { showAlert("Please log in to like posts.", true); return; }
 
-    const { data: existingLike, error: checkError } = await supabase
+    const { data: existingLike, error: checkError } = await supabaseClient
         .from('likes')
         .select('id')
         .eq('post_id', postId)
@@ -1646,7 +1665,7 @@ async function handleLike(postId, buttonElement) {
     let currentLikes = parseInt(buttonElement.querySelector('.like-count').textContent);
 
     if (existingLike) {
-        const { error } = await supabase
+        const { error } = await supabaseClient
             .from('likes')
             .delete()
             .eq('id', existingLike.id);
@@ -1654,7 +1673,7 @@ async function handleLike(postId, buttonElement) {
         buttonElement.classList.remove('liked');
         buttonElement.querySelector('.like-count').textContent = currentLikes - 1;
     } else {
-        const { error } = await supabase
+        const { error } = await supabaseClient
             .from('likes')
             .insert({ post_id: postId, user_id: user.id });
         if (error) { console.error("Error liking post:", error.message); return; }
@@ -1683,12 +1702,12 @@ async function handleLike(postId, buttonElement) {
 
 // --- Handle Comment Function with restrictions ---
 async function handleComment(postId, commentText, isModal = false) {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) { showAlert("Please log in to comment.", true); return; }
 
     // Comment count restriction for non-premium users
     if (!isPremiumUser) {
-        const { count, error } = await supabase
+        const { count, error } = await supabaseClient
             .from('comments')
             .select('*', { count: 'exact', head: true })
             .eq('post_id', postId)
@@ -1703,7 +1722,7 @@ async function handleComment(postId, commentText, isModal = false) {
         }
     }
     
-    const { data: newComment, error } = await supabase.from('comments').insert({
+    const { data: newComment, error } = await supabaseClient.from('comments').insert({
         post_id: postId,
         author_id: user.id,
         comment_text: commentText,
@@ -1792,30 +1811,35 @@ searchInput.addEventListener('keypress', (e) => {
     }
 });
 
-
-// --- Initial Load ---
+// --- Initial Load & App Logic ---
 document.addEventListener('DOMContentLoaded', async () => {
-    await loadFeed();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-        renderSuggestedFriends(user.id);
+    // 1. Check for a session immediately to decide whether to proceed or redirect.
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    
+    if (session) {
+        // If a session exists, load the feed and suggested friends.
+        // renderSuggestedFriends is now called inside loadFeed when no search term is present.
+        await loadFeed(); 
+    } else {
+        // If no session, redirect to the login/signup page.
+        window.location.href = "index.html";
+        return;
     }
 });
 
 
-const floatingPostBtn = document.getElementById('floatingPostBtn');
-const postModalOverlay = document.getElementById('postModalOverlay');
-const closePostModalBtn = document.getElementById('closePostModalBtn');
-
+// --- Modal UI Logic ---
 floatingPostBtn.addEventListener('click', () => {
     postModalOverlay.style.display = 'flex';
     setTimeout(() => {
         document.getElementById('postContent').focus();
     }, 100);
 });
+
 closePostModalBtn.addEventListener('click', () => {
     postModalOverlay.style.display = 'none';
 });
+
 window.addEventListener('click', (e) => {
     if (e.target === postModalOverlay) {
         postModalOverlay.style.display = 'none';
@@ -1823,5 +1847,7 @@ window.addEventListener('click', (e) => {
 });
 
 </script>
+
+            
 </body>
 </html>

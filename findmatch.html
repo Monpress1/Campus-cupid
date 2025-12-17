@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Bebas+Neue&display=swap" rel="stylesheet">
 <style>
+/* --- Global & Base Styles --- */
 body {
     margin: 0;
     font-family: "Segoe UI", Arial, sans-serif;
@@ -16,8 +17,9 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     min-height: 100vh;
+    padding-top: 6rem;
     overflow: hidden;
 }
 .header {
@@ -29,6 +31,8 @@ body {
     position: fixed;
     top: 0;
     z-index: 100;
+    background: rgba(15, 23, 42, 0.95); 
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
 }
 .logo {
     font-family: 'Pacifico', cursive;
@@ -38,7 +42,7 @@ body {
 }
 .nav-icons {
     display: flex;
-    gap: 1.5rem; /* Use gap for spacing between icons */
+    gap: 1.5rem; 
     align-items: center;
 }
 .nav-icons a {
@@ -49,15 +53,18 @@ body {
 .nav-icons a:hover {
     color: #fbbf24;
 }
+
+/* --- Card Specific Styles --- */
 .cards-container {
     width: 90vw;
     max-width: 400px;
-    height: 60vh;
-    min-height: 400px;
+    height: 70vh;
+    min-height: 450px;
     position: relative;
     display: flex;
     justify-content: center;
     align-items: center;
+    margin-top: 1rem;
 }
 .profile-card {
     position: absolute;
@@ -67,7 +74,7 @@ body {
     background-position: center;
     border-radius: 1rem;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
     cursor: grab;
     will-change: transform;
     display: flex;
@@ -75,6 +82,7 @@ body {
     justify-content: flex-end;
     overflow: hidden;
     touch-action: none;
+    z-index: 3;
 }
 .profile-card:nth-child(2) {
     transform: translateY(-10px) scale(0.95);
@@ -88,61 +96,59 @@ body {
     display: none;
 }
 .profile-info {
-    padding: 1rem;
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+    padding: 1.5rem;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
     color: white;
     position: relative;
 }
 .profile-info h3 {
     margin: 0 0 0.2rem;
-    font-size: 1.5rem;
+    font-size: 1.8rem;
 }
 .profile-info p {
     margin: 0;
-    font-size: 1rem;
+    font-size: 1.1rem;
+    color: #cbd5e1;
 }
-.chat-icon {
-    position: absolute;
-    bottom: 1rem;
-    right: 1rem;
-    font-size: 2rem;
-    color: #22c55e;
-    text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
-    cursor: pointer;
-    transition: transform 0.2s;
-}
-.chat-icon:hover {
-    transform: scale(1.1);
-}
+
+/* --- Swipe Indicators --- */
 .status-indicator {
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: white;
+    top: 50px;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-family: 'Bebas Neue', cursive;
     font-size: 3rem;
     font-weight: bold;
     opacity: 0;
-    transition: opacity 0.5s, transform 0.5s;
+    transition: opacity 0.3s, transform 0.3s;
     pointer-events: none;
-    text-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
     z-index: 10;
 }
 .status-indicator.like {
+    left: 20px;
+    border: 5px solid #22c55e;
     color: #22c55e;
-    transform: translate(-50%, -50%) rotate(-30deg);
+    transform: rotate(-20deg);
 }
 .status-indicator.nope {
+    right: 20px;
+    border: 5px solid #ef4444;
     color: #ef4444;
-    transform: translate(-50%, -50%) rotate(30deg);
+    transform: rotate(20deg);
 }
 .status-indicator.visible {
     opacity: 1;
 }
-.no-more-matches {
+
+/* --- No Matches/Loading States --- */
+#loading, .no-more-matches {
+    position: absolute;
     text-align: center;
     padding: 2rem;
     color: #cbd5e1;
+    top: 50%;
+    transform: translateY(-50%);
 }
 </style>
 </head>
@@ -151,15 +157,15 @@ body {
 <div class="header">
     <a href="feed.html" class="logo">Campus Cupid</a>
     <div class="nav-icons">
-        <a href="feed.html"><i class="fa-solid fa-fire"></i></a>
-        <a href="chat.html"><i class="fa-solid fa-comments"></i></a>
-        <a href="profile.html"><i class="fa-solid fa-user"></i></a>
-        <a href="notifications.html"><i class="fa-solid fa-bell"></i></a>
+        <a href="feed.html" title="Feed"><i class="fa-solid fa-fire"></i></a>
+        <a href="chat.html" title="Messages"><i class="fa-solid fa-comments"></i></a>
+        <a href="profile.html" title="Profile"><i class="fa-solid fa-user"></i></a>
+        <a href="notifications.html" title="Notifications"><i class="fa-solid fa-bell"></i></a>
     </div>
 </div>
 
 <div class="cards-container" id="cardsContainer">
-    <div id="loading" style="text-align: center; color: #cbd5e1;">
+    <div id="loading" style="display:none;">
         <i class="fa-solid fa-spinner fa-spin-pulse" style="font-size: 3rem; margin-bottom: 1rem;"></i>
         <h3>Loading matches...</h3>
     </div>
@@ -172,235 +178,245 @@ body {
 </div>
 
 <script>
-const SUPABASE_URL = "https://vfbjwkfurleatfdrabdg.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmYmp3a2Z1cmxlYXRmZHJhYmRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MjAwNDIsImV4cCI6MjA3Mjk5NjA0Mn0.hguIfyynGc19tsSm9u66qy5IeUv40_mE8-JBjqnOQBE";
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-const cardsContainer = document.getElementById('cardsContainer');
-const noMoreMatches = document.querySelector('.no-more-matches');
-const loadingIndicator = document.getElementById('loading');
-
-let currentUserId = null;
-let currentCard = null;
-
-init();
-
-async function init() {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-        window.location.href = "index.html";
-        return;
-    }
-    currentUserId = user.id;
-
-    const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('is_premium')
-        .eq('user_id', currentUserId)
-        .single();
+// FIX: Using an IIFE to create a private scope and prevent variable conflicts
+(function() {
+    const SUPABASE_URL = "https://vfbjwkfurleatfdrabdg.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmYmp3a2Z1cmxlYXRmZHJhYmRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MjAwNDIsImV4cCI6MjA3Mjk5NjA0Mn0.hguIfyynGc19tsSm9u66qy5IeUv40_mE8-JBjqnOQBE";
     
-    if (error || !profile.is_premium) {
-        window.location.href = "premium.html";
-        return;
-    }
+    // The client is created here, inside the function's private scope
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    loadProfiles();
-}
+    const cardsContainer = document.getElementById('cardsContainer');
+    const noMoreMatches = document.querySelector('.no-more-matches');
+    const loadingIndicator = document.getElementById('loading');
 
-// Fisher-Yates shuffle algorithm
-function shuffle(array) {
-  let currentIndex = array.length, randomIndex;
+    let currentUserId = null;
+    let currentCard = null;
 
-  while (currentIndex !== 0) {
-    randomIndex = Math.floor(Math.random() * currentIndex);
-    currentIndex--;
-    [array[currentIndex], array[randomIndex]] = [
-      array[randomIndex], array[currentIndex]
-    ];
-  }
-  return array;
-}
+    init();
 
-async function loadProfiles() {
-    loadingIndicator.style.display = 'block';
+    async function init() {
+        loadingIndicator.style.display = 'block';
 
-    const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .neq('user_id', currentUserId);
-
-    loadingIndicator.style.display = 'none';
-
-    if (error) {
-        console.error('Error fetching profiles:', error);
-        noMoreMatches.style.display = 'block';
-        return;
-    }
-    
-    if (data.length === 0) {
-        noMoreMatches.style.display = 'block';
-        return;
-    }
-
-    // Shuffle the profiles before displaying
-    const shuffledProfiles = shuffle(data);
-
-    shuffledProfiles.forEach(p => {
-        const card = createCard(p);
-        cardsContainer.appendChild(card);
-    });
-
-    currentCard = cardsContainer.querySelector('.profile-card');
-    if (currentCard) {
-        setupCardEvents(currentCard);
-    }
-}
-
-function createCard(profile) {
-    const card = document.createElement('div');
-    card.className = 'profile-card';
-    card.dataset.userId = profile.user_id;
-    card.style.backgroundImage = `url(${profile.avatar_url || 'https://via.placeholder.com/400x600?text=No+Photo'})`;
-    card.innerHTML = `
-        <div class="profile-info">
-            <h3>${profile.full_name}, ${profile.age || 'N/A'}</h3>
-            <p>${profile.bio || 'No bio yet.'}</p>
-        </div>
-        <div class="status-indicator like">MATCH!</div>
-        <div class="status-indicator nope">NOPE!</div>
-    `;
-    return card;
-}
-
-function setupCardEvents(card) {
-    let startX, startY;
-    let isDragging = false;
-    let lastX = 0;
-    const likeIndicator = card.querySelector('.like');
-    const nopeIndicator = card.querySelector('.nope');
-
-    const handleStart = (e) => {
-        isDragging = true;
-        startX = e.clientX || e.touches[0].clientX;
-        startY = e.clientY || e.touches[0].clientY;
-        card.style.transition = 'none';
-    };
-
-    const handleMove = (e) => {
-        if (!isDragging) return;
-        const currentX = e.clientX || e.touches[0].clientX;
-        const currentY = e.clientY || e.touches[0].clientY;
-        const deltaX = currentX - startX;
-        const deltaY = currentY - startY;
-        const rotation = deltaX / 50;
-
-        card.style.transform = `translate(${deltaX}px, ${deltaY}px) rotate(${rotation}deg)`;
+        // Using getSession() for reliable session check
+        const { data: { session } } = await supabase.auth.getSession();
         
-        const opacity = Math.min(Math.abs(deltaX) / 100, 1);
-        if (deltaX > 0) {
-            likeIndicator.style.opacity = opacity;
-            nopeIndicator.style.opacity = 0;
-        } else {
-            nopeIndicator.style.opacity = opacity;
-            likeIndicator.style.opacity = 0;
+        if (!session) {
+            window.location.href = "index.html";
+            return;
         }
         
-        lastX = deltaX;
-    };
+        currentUserId = session.user.id;
 
-    const handleEnd = async () => {
-        isDragging = false;
-        card.style.transition = 'transform 0.5s ease-in-out';
-        likeIndicator.style.opacity = 0;
-        nopeIndicator.style.opacity = 0;
-
-        const swipeThreshold = window.innerWidth / 4;
-        const swipedUserId = card.dataset.userId;
+        // Check premium status
+        const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('is_premium')
+            .eq('user_id', currentUserId)
+            .single();
         
-        if (Math.abs(lastX) > swipeThreshold) {
-            const direction = lastX > 0 ? 'like' : 'nope';
-            
-            if (direction === 'like') {
-                const name = card.querySelector('h3').textContent.split(',')[0];
-                await startChatImmediately(swipedUserId, name);
-            }
-            
-            swipeCard(card, direction);
-        } else {
-            card.style.transform = 'translate(0, 0) rotate(0)';
+        if (error || !profile || !profile.is_premium) {
+            window.location.href = "premium.html";
+            return;
         }
-    };
-    
-    async function startChatImmediately(targetUserId, targetUserName) {
-        try {
-            // Check for existing chat room (to prevent duplicates)
-            const { data: existingRoom, error: findErr } = await supabase
-                .from('chat_rooms')
-                .select('id')
-                .or(`and(user1_id.eq.${currentUserId},user2_id.eq.${targetUserId}), and(user1_id.eq.${targetUserId},user2_id.eq.${currentUserId})`)
-                .single();
 
-            let roomId;
-            if (existingRoom) {
-                roomId = existingRoom.id;
-            } else {
-                // If no room exists, create a new one
-                const { data: newRoom, error: createErr } = await supabase
-                    .from('chat_rooms')
-                    .insert({ user1_id: currentUserId, user2_id: targetUserId })
-                    .select('id')
-                    .single();
-                if (createErr) throw createErr;
-                roomId = newRoom.id;
-            }
-
-            // Insert a first message
-            await supabase.from('messages').insert({
-                sender_id: currentUserId,
-                receiver_id: targetUserId,
-                content: ` Hi 💖${targetUserName} i swiped right!`
-            });
-
-            // Redirect to the chat page with the room ID
-            window.location.href = `chat.html?room_id=${roomId}`;
-
-        } catch (err) {
-            console.error('Error starting chat:', err);
-            alert('Could not start chat. Please try again.');
-        }
+        loadProfiles();
     }
-    
-    const swipeCard = (card, direction) => {
-        const rotation = direction === 'like' ? 30 : -30;
-        const translateX = direction === 'like' ? '150vw' : '-150vw';
-        
-        card.style.transform = `translate(${translateX}, 0) rotate(${rotation}deg)`;
-        card.addEventListener('transitionend', () => {
-            card.remove();
-            moveToNextCard();
-        });
-    };
 
-    const moveToNextCard = () => {
-        const nextCard = cardsContainer.querySelector('.profile-card');
-        if (nextCard) {
-            nextCard.style.transition = 'transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-            nextCard.style.transform = 'translateY(0) scale(1)';
-            currentCard = nextCard;
-            setupCardEvents(currentCard);
-        } else {
+    // Fisher-Yates shuffle algorithm
+    function shuffle(array) {
+      let currentIndex = array.length, randomIndex;
+
+      while (currentIndex !== 0) {
+        randomIndex = Math.floor(Math.random() * currentIndex);
+        currentIndex--;
+        [array[currentIndex], array[randomIndex]] = [
+          array[randomIndex], array[currentIndex]
+        ];
+      }
+      return array;
+    }
+
+    async function loadProfiles() {
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .neq('user_id', currentUserId);
+
+        loadingIndicator.style.display = 'none';
+
+        if (error) {
+            console.error('Error fetching profiles:', error);
+            noMoreMatches.innerHTML = `<p style="color: #ef4444;">Error loading matches.</p>`;
             noMoreMatches.style.display = 'block';
+            return;
         }
-    };
+        
+        if (data.length === 0) {
+            noMoreMatches.style.display = 'block';
+            return;
+        }
 
-    card.addEventListener('mousedown', handleStart);
-    card.addEventListener('mousemove', handleMove);
-    card.addEventListener('mouseup', handleEnd);
-    
-    card.addEventListener('touchstart', (e) => handleStart(e));
-    card.addEventListener('touchmove', (e) => handleMove(e));
-    card.addEventListener('touchend', handleEnd);
-}
+        const shuffledProfiles = shuffle(data);
+
+        shuffledProfiles.forEach(p => {
+            const card = createCard(p);
+            cardsContainer.appendChild(card);
+        });
+
+        currentCard = cardsContainer.querySelector('.profile-card');
+        if (currentCard) {
+            setupCardEvents(currentCard);
+        }
+    }
+
+    function createCard(profile) {
+        const card = document.createElement('div');
+        card.className = 'profile-card';
+        card.dataset.userId = profile.user_id;
+        card.style.backgroundImage = `url(${profile.avatar_url || 'https://via.placeholder.com/400x600?text=No+Photo'})`;
+        card.innerHTML = `
+            <div class="profile-info">
+                <h3>${profile.full_name}, ${profile.age || 'N/A'}</h3>
+                <p>${profile.bio || 'No bio yet.'}</p>
+            </div>
+            <div class="status-indicator like">LIKE!</div>
+            <div class="status-indicator nope">NOPE!</div>
+        `;
+        return card;
+    }
+
+    function setupCardEvents(card) {
+        let startX, startY;
+        let isDragging = false;
+        let lastX = 0;
+        const likeIndicator = card.querySelector('.like');
+        const nopeIndicator = card.querySelector('.nope');
+
+        const handleStart = (e) => {
+            isDragging = true;
+            startX = e.clientX || e.touches[0].clientX;
+            startY = e.clientY || e.touches[0].clientY;
+            card.style.transition = 'none';
+        };
+
+        const handleMove = (e) => {
+            if (!isDragging) return;
+            const currentX = e.clientX || e.touches[0].clientX;
+            const currentY = e.clientY || e.touches[0].clientY;
+            const deltaX = currentX - startX;
+            const deltaY = currentY - startY;
+            const rotation = deltaX / 50;
+
+            card.style.transform = `translate(${deltaX}px, ${deltaY}px) rotate(${rotation}deg)`;
+            
+            const opacity = Math.min(Math.abs(deltaX) / 100, 1);
+            if (deltaX > 0) {
+                likeIndicator.style.opacity = opacity;
+                nopeIndicator.style.opacity = 0;
+            } else {
+                likeIndicator.style.opacity = 0;
+                nopeIndicator.style.opacity = opacity;
+            }
+            
+            lastX = deltaX;
+        };
+
+        const handleEnd = async () => {
+            isDragging = false;
+            card.style.transition = 'transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+            likeIndicator.style.opacity = 0;
+            nopeIndicator.style.opacity = 0;
+
+            const swipeThreshold = window.innerWidth / 4;
+            const swipedUserId = card.dataset.userId;
+            
+            if (Math.abs(lastX) > swipeThreshold) {
+                const direction = lastX > 0 ? 'like' : 'nope';
+                
+                if (direction === 'like') {
+                    const name = card.querySelector('h3').textContent.split(',')[0];
+                    await startChatImmediately(swipedUserId, name);
+                }
+                
+                swipeCard(card, direction);
+            } else {
+                card.style.transform = 'translate(0, 0) rotate(0)';
+            }
+        };
+        
+        async function startChatImmediately(targetUserId, targetUserName) {
+            try {
+                // 1. Check for existing chat room
+                const { data: existingRoom } = await supabase
+                    .from('chat_rooms')
+                    .select('id')
+                    .or(`and(user1_id.eq.${currentUserId},user2_id.eq.${targetUserId}), and(user1_id.eq.${targetUserId},user2_id.eq.${currentUserId})`)
+                    .single();
+
+                let roomId;
+                if (existingRoom) {
+                    roomId = existingRoom.id;
+                } else {
+                    // 2. Create a new room if none exists
+                    const { data: newRoom, error: createErr } = await supabase
+                        .from('chat_rooms')
+                        .insert({ user1_id: currentUserId, user2_id: targetUserId })
+                        .select('id')
+                        .single();
+                    if (createErr) throw createErr;
+                    roomId = newRoom.id;
+                }
+
+                // 3. Send a first message
+                await supabase.from('messages').insert({
+                    sender_id: currentUserId,
+                    receiver_id: targetUserId,
+                    content: `Hi 💖${targetUserName}, I swiped right!`
+                });
+
+                window.location.href = `chat.html?room_id=${roomId}`;
+
+            } catch (err) {
+                console.error('Error starting chat:', err);
+                swipeCard(card, 'like'); 
+            }
+        }
+        
+        const swipeCard = (card, direction) => {
+            const rotation = direction === 'like' ? 30 : -30;
+            const translateX = direction === 'like' ? '150vw' : '-150vw';
+            
+            card.style.transform = `translate(${translateX}, 0) rotate(${rotation}deg)`;
+            
+            card.addEventListener('transitionend', () => {
+                card.remove();
+                moveToNextCard();
+            }, { once: true });
+        };
+
+        const moveToNextCard = () => {
+            const nextCard = cardsContainer.querySelector('.profile-card');
+            if (nextCard) {
+                nextCard.style.transition = 'transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                nextCard.style.transform = 'translateY(0) scale(1)';
+                currentCard = nextCard;
+                setupCardEvents(currentCard);
+            } else {
+                noMoreMatches.style.display = 'block';
+            }
+        };
+
+        // Attach Listeners
+        card.addEventListener('mousedown', handleStart);
+        card.addEventListener('mousemove', handleMove);
+        card.addEventListener('mouseup', handleEnd);
+        
+        card.addEventListener('touchstart', (e) => handleStart(e));
+        card.addEventListener('touchmove', (e) => handleMove(e));
+        card.addEventListener('touchend', handleEnd);
+    }
+})(); // IIFE ends here
 </script>
 </body>
 </html>
