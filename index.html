@@ -1,183 +1,317 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Campus Cupid | Monpress</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
-    <style>
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #fff5f7; font-family: 'Helvetica Neue', sans-serif; touch-action: none; }
-        
-        #ui-layer { position: absolute; width: 100%; top: 28%; text-align: center; pointer-events: none; z-index: 10; }
-        
-        #instruction-header {
-            position: absolute;
-            top: 20px;
-            width: 100%;
-            text-align: center;
-            z-index: 100;
-            pointer-events: none;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campus Cupid ❤️</title>
 
-        .tap-msg {
-            background: rgba(255, 77, 109, 0.1);
-            color: #ff4d6d;
-            padding: 8px 20px;
-            border-radius: 30px;
-            font-size: 0.8rem;
-            font-weight: bold;
-            letter-spacing: 1px;
-            border: 1px solid rgba(255, 77, 109, 0.2);
-            display: inline-block;
-        }
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#fbbf24">
+  <link rel="icon" href="/images/icons/icon-192x192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Campus Cupid">
 
-        .wavy-container { display: flex; justify-content: center; flex-wrap: wrap; gap: 4px; }
-        .letter { display: inline-block; font-size: clamp(2.2rem, 10vw, 3.8rem); font-weight: 900; color: #ff4d6d; animation: wave 2s ease-in-out infinite; }
-        
-        @keyframes wave { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
-        .letter:nth-child(n) { animation-delay: calc(0.1s * var(--i)); }
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-        .subtitle { font-size: 1.1rem; color: #880e4f; margin-top: 10px; font-weight: 300; }
-        .brand { font-weight: bold; color: #590d22; margin-top: 8px; text-transform: uppercase; letter-spacing: 4px; font-size: 0.7rem; opacity: 0.8; }
-        
-        #request-gyro { 
-            position: absolute; 
-            bottom: 20px; 
-            left: 50%; 
-            transform: translateX(-50%); 
-            z-index: 100; 
-            padding: 12px 24px; 
-            border-radius: 25px; 
-            border: none; 
-            background: #ff4d6d; 
-            color: white; 
-            font-weight: bold;
-            display: none; 
-            box-shadow: 0 4px 15px rgba(255, 77, 109, 0.3);
-        }
-    </style>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: linear-gradient(135deg, #0f172a, #1e293b, #334155);
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .container {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(10px);
+      padding: 2rem;
+      border-radius: 1rem;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      animation: fadeIn 0.8s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      font-size: 1.8rem;
+      color: #fbbf24;
+    }
+    h1 i { margin-right: 8px; color: #ef4444; }
+    input, select, button {
+      width: 90%;
+      padding: 0.8rem;
+      margin: 0.5rem 0;
+      border: none;
+      border-radius: 0.5rem;
+      font-size: 1rem;
+    }
+    input, select {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+    }
+    input::placeholder { color: #bbb; }
+    button {
+      background: #fbbf24;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    button:hover { background: #f59e0b; }
+    .toggle { text-align: center; margin-top: 1rem; cursor: pointer; color: #93c5fd; }
+    .hidden { display: none; }
+    .row { display: flex; gap: 0.5rem; }
+    .row select { flex: 1; }
+    .ios-prompt {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #334155;
+      color: #fff;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      z-index: 1000;
+      width: 90%;
+      max-width: 300px;
+      font-size: 0.9em;
+      line-height: 1.4;
+    }
+    .ios-prompt p { margin: 0; }
+    .ios-prompt i {
+      font-size: 1.5em;
+      margin: 0 5px;
+      color: #fbbf24;
+    }
+    @media (max-width: 480px) {
+      .container { margin: 1rem; padding: 1.5rem; }
+      h1 { font-size: 1.5rem; }
+      .row { flex-direction: column; }
+    }
+  </style>
 </head>
 <body>
+  <div class="container">
+    <h1><i class="fa-solid fa-heart-circle-bolt"></i> Campus Cupid</h1>
 
-    <div id="instruction-header">
-        <div class="tap-msg">POP ALL HEARTS TO REFRESH (<span id="count">0</span> LEFT)</div>
-    </div>
+    <form id="login-form">
+      <input type="email" id="login-email" placeholder="Email" required>
+      <input type="password" id="login-password" placeholder="Password" required>
+      <button type="submit">Login</button>
+    </form>
 
-    <button id="request-gyro">ACTIVATE TILT PHYSICS</button>
+    <form id="signup-form" class="hidden">
+      <input type="text" id="signup-username" placeholder="Username" required>
+      <input type="email" id="signup-email" placeholder="Email" required>
+      <input type="password" id="signup-password" placeholder="Password" required>
+      <input type="password" id="signup-confirm" placeholder="Confirm Password" required>
 
-    <div id="ui-layer">
-        <div class="wavy-container">
-            <span class="letter" style="--i:1">C</span><span class="letter" style="--i:2">a</span><span class="letter" style="--i:3">m</span><span class="letter" style="--i:4">p</span><span class="letter" style="--i:5">u</span><span class="letter" style="--i:6">s</span><span class="letter" style="--i:7">&nbsp;</span><span class="letter" style="--i:8">C</span><span class="letter" style="--i:9">u</span><span class="letter" style="--i:10">p</span><span class="letter" style="--i:11">i</span><span class="letter" style="--i:12">d</span>
-        </div>
-        <div class="subtitle">is upgrading...</div>
-        <div class="brand">Monpress at work</div>
-    </div>
+      <div class="row"> 
+        <select id="signup-gender" required>
+          <option value="">Gender</option>
+          <option value="male">Male</option>
+          <option value="female">Female</option>
+          <option value="other">Other</option>
+        </select>
+        <select id="signup-age" required>
+          <option value="">Age</option>
+        </select>
+      </div>
 
-    <script>
-        
-        //feel free to use code. by Eli Monpress 
-        
-        const { Engine, Render, Runner, Bodies, Composite, Mouse, MouseConstraint, Events } = Matter;
+      <button type="submit">Sign Up</button>
+    </form>
 
-        const engine = Engine.create();
-        const world = engine.world;
-        const width = window.innerWidth;
-        const height = window.innerHeight;
+    <div class="toggle" id="toggle-view">Don’t have an account? Sign up</div>
+    
+    <button id="pwa-install-button" class="hidden" style="margin-top: 1rem;">Install App</button>
+  </div>
+  
+  <div id="ios-prompt" class="ios-prompt hidden">
+    <p>To install, tap <i class="fa-solid fa-arrow-up-from-bracket"></i> then 'Add to Home Screen'.</p>
+  </div>
 
-        const render = Render.create({
-            element: document.body,
-            engine: engine,
-            options: { width, height, wireframes: false, background: 'transparent', pixelRatio: 1 }
-        });
+  <script>
+    // 2. FIX: Renamed 'supabase' to 'supabaseClient' to avoid the declaration error
+    const supabaseClient = window.supabase.createClient(
+      "https://vfbjwkfurleatfdrabdg.supabase.co", 
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmYmp3a2Z1cmxlYXRmZHJhYmRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MjAwNDIsImV4cCI6MjA3Mjk5NjA0Mn0.hguIfyynGc19tsSm9u66qy5IeUv40_mE8-JBjqnOQBE"
+    );
 
-        Render.run(render);
-        Runner.run(Runner.create(), engine);
+    const loginForm = document.getElementById("login-form");
+    const signupForm = document.getElementById("signup-form");
+    const toggleView = document.getElementById("toggle-view");
+    const pwaInstallButton = document.getElementById("pwa-install-button");
+    const iosPrompt = document.getElementById("ios-prompt");
+    let deferredPrompt;
 
-        // Enclosed Screen Walls
-        const wallOptions = { isStatic: true, render: { visible: false } };
-        Composite.add(world, [
-            Bodies.rectangle(width/2, height + 25, width, 50, wallOptions), // Floor
-            Bodies.rectangle(width/2, -25, width, 50, wallOptions),         // Ceiling
-            Bodies.rectangle(-25, height/2, 50, height, wallOptions),        // Left
-            Bodies.rectangle(width + 25, height/2, 50, height, wallOptions)  // Right
-        ]);
+    // Populate age dropdown
+    const ageSelect = document.getElementById("signup-age");
+    for (let i = 16; i <= 60; i++) {
+      const option = document.createElement("option");
+      option.value = i;
+      option.textContent = i;
+      ageSelect.appendChild(option);
+    }
 
-        function spawnBatch() {
-            const shapes = [];
-            // Adding a minimum of 22 balls, but scaled for screen size for better effect
-            const ballCount = Math.max(22, width < 600 ? 80 : 150); 
-            const heartCount = 10;
+    toggleView.addEventListener("click", () => {
+      loginForm.classList.toggle("hidden");
+      signupForm.classList.toggle("hidden");
+      toggleView.textContent = loginForm.classList.contains("hidden")
+        ? "Already have an account? Login"
+        : "Don’t have an account? Sign up";
+    });
 
-            // Clickable Hearts
-            for (let i = 0; i < heartCount; i++) {
-                shapes.push(Bodies.circle(Math.random() * width, Math.random() * height, 24, {
-                    restitution: 0.8, friction: 0.01, label: 'heart',
-                    render: { sprite: { texture: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="50" height="50"><text y="35" x="5" font-size="32">❤️</text></svg>' } }
-                }));
+    // Login
+    loginForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("login-email").value;
+      const password = document.getElementById("login-password").value;
+      
+      // FIX: Use supabaseClient
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      
+      if (error) {
+        alert(error.message);
+      } else {
+        const user = data.user;
+        if (user) {
+            // Check if the user's profile is complete
+            // FIX: Use supabaseClient
+            const { data: profile, error: profileError } = await supabaseClient
+                .from('profiles')
+                .select('full_name, age, gender')
+                .eq('user_id', user.id)
+                .single();
+
+            if (profileError) {
+                console.error("Error fetching user profile:", profileError);
+                // In case of an error, redirect to profile.html as a fallback
+                window.location.href = "profile.html";
+                return;
             }
 
-            // Ordinary Decoration Balls
-            for (let i = 0; i < ballCount; i++) {
-                shapes.push(Bodies.circle(Math.random() * width, Math.random() * height, Math.random() * 12 + 6, {
-                    restitution: 0.7, friction: 0.001, label: 'ordinary',
-                    render: { fillStyle: i % 2 === 0 ? '#ffccd5' : '#ffb3c1' }
-                }));
+            // Check for profile completeness
+            if (profile && profile.full_name && profile.age && profile.gender) {
+                window.location.href = "feed.html"; // Redirect to feed if profile is complete
+            } else {
+                window.location.href = "profile.html"; // Redirect to profile to complete it
             }
-            Composite.add(world, shapes);
-            updateCount();
-        }
-
-        function updateCount() {
-            const hearts = world.bodies.filter(b => b.label === 'heart');
-            document.getElementById('count').innerText = hearts.length;
-            if (hearts.length === 0) {
-                // Remove all ordinary balls before spawning new batch to keep performance clean
-                const balls = world.bodies.filter(b => b.label === 'ordinary');
-                Composite.remove(world, balls);
-                spawnBatch();
-            }
-        }
-
-        // Mouse/Touch Interactivity
-        const mouse = Mouse.create(render.canvas);
-        const mouseConstraint = MouseConstraint.create(engine, {
-            mouse: mouse,
-            constraint: { stiffness: 0.1, render: { visible: false } }
-        });
-        Composite.add(world, mouseConstraint);
-
-        // Pop logic
-        Events.on(mouseConstraint, 'mousedown', (e) => {
-            const clickedHeart = world.bodies.find(b => b.label === 'heart' && Matter.Bounds.contains(b.bounds, e.mouse.position));
-            if (clickedHeart) {
-                Composite.remove(world, clickedHeart);
-                updateCount();
-            }
-        });
-
-        // Gyroscope Logic
-        const gyroBtn = document.getElementById('request-gyro');
-        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-            gyroBtn.style.display = 'block';
-            gyroBtn.onclick = () => {
-                DeviceOrientationEvent.requestPermission().then(res => {
-                    if (res === 'granted') {
-                        window.addEventListener('deviceorientation', handleOrientation);
-                        gyroBtn.style.display = 'none';
-                    }
-                });
-            };
         } else {
-            window.addEventListener('deviceorientation', handleOrientation);
+            // Fallback if user data is not returned
+            window.location.href = "profile.html";
         }
+      }
+    });
 
-        function handleOrientation(event) {
-            engine.gravity.x = event.gamma / 25;
-            engine.gravity.y = event.beta / 25;
+    // Signup
+    signupForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const username = document.getElementById("signup-username").value;
+      const email = document.getElementById("signup-email").value;
+      const password = document.getElementById("signup-password").value;
+      const confirm = document.getElementById("signup-confirm").value;
+      const gender = document.getElementById("signup-gender").value;
+      const age = document.getElementById("signup-age").value;
+
+      if (password !== confirm) {
+        alert("Passwords do not match");
+        return;
+      }
+
+      // FIX: Use supabaseClient
+      const { data, error } = await supabaseClient.auth.signUp({ email, password });
+      if (error) {
+        alert(error.message);
+      } else {
+        const user = data.user;
+        if (user) {
+          // FIX: Use supabaseClient
+          await supabaseClient.from("profiles").insert([
+            { 
+              user_id: user.id, 
+              full_name: username, 
+              gender: gender,
+              age: age,
+              bio: "", 
+              interests: [], 
+              is_premium: false 
+            }
+          ]);
         }
+        alert("Signup successful! Please log in.");
+        signupForm.reset();
+        signupForm.classList.add("hidden");
+        loginForm.classList.remove("hidden");
+        toggleView.textContent = "Don’t have an account? Sign up";
+      }
+    });
 
-        spawnBatch();
-        window.addEventListener('resize', () => { location.reload(); });
-    </script>
+    // ✅ Register the service worker for PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker
+          .register('/sw.js')
+          .then(() => {
+            console.log('Service Worker registered');
+          })
+          .catch(err => {
+            console.error('SW registration failed', err);
+          });
+      });
+    }
+
+    // ✅ PWA install logic for Android/Desktop
+    window.addEventListener('beforeinstallprompt', (e) => {
+      // Prevents the default browser prompt
+      e.preventDefault();       
+      deferredPrompt = e;
+      pwaInstallButton.classList.remove('hidden'); // Show your custom button
+      console.log('PWA Install button is now visible.');
+    });
+
+    pwaInstallButton.addEventListener('click', async () => {
+      if (!deferredPrompt) {
+        console.warn('Prompt is not available.');
+        return; 
+      }
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log(`User response to the install prompt: ${outcome}`);
+      deferredPrompt = null;
+      pwaInstallButton.classList.add('hidden');
+    });
+
+    // ✅ iOS Home Screen Prompt Logic
+    function isiOS() {
+        const userAgent = window.navigator.userAgent.toLowerCase();
+        return /iphone|ipad|ipod/.test(userAgent);
+    }
+    
+    function isInStandaloneMode() {
+        return ('standalone' in window.navigator) && (window.navigator.standalone);
+    }
+
+    window.addEventListener('load', () => {
+        if (isiOS() && !isInStandaloneMode()) {
+            // Show the prompt after a short delay to not disrupt initial load
+            setTimeout(() => {
+                iosPrompt.classList.remove('hidden');
+            }, 3000); // 3-second delay
+        }
+    });
+
+  </script>
 </body>
 </html>

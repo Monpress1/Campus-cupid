@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Campus Cupid | Monpress</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    <style>
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #fff5f7; font-family: 'Helvetica Neue', sans-serif; touch-action: none; }
+        
+        #ui-layer { position: absolute; width: 100%; top: 28%; text-align: center; pointer-events: none; z-index: 10; }
+        
+        #instruction-header {
+            position: absolute;
+            top: 20px;
+            width: 100%;
+            text-align: center;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        .tap-msg {
+            background: rgba(255, 77, 109, 0.1);
+            color: #ff4d6d;
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+            border: 1px solid rgba(255, 77, 109, 0.2);
+            display: inline-block;
+        }
+
+        .wavy-container { display: flex; justify-content: center; flex-wrap: wrap; gap: 4px; }
+        .letter { display: inline-block; font-size: clamp(2.2rem, 10vw, 3.8rem); font-weight: 900; color: #ff4d6d; animation: wave 2s ease-in-out infinite; }
+        
+        @keyframes wave { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+        .letter:nth-child(n) { animation-delay: calc(0.1s * var(--i)); }
+
+        .subtitle { font-size: 1.1rem; color: #880e4f; margin-top: 10px; font-weight: 300; }
+        .brand { font-weight: bold; color: #590d22; margin-top: 8px; text-transform: uppercase; letter-spacing: 4px; font-size: 0.7rem; opacity: 0.8; }
+        
+        #request-gyro { 
+            position: absolute; 
+            bottom: 20px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            z-index: 100; 
+            padding: 12px 24px; 
+            border-radius: 25px; 
+            border: none; 
+            background: #ff4d6d; 
+            color: white; 
+            font-weight: bold;
+            display: none; 
+            box-shadow: 0 4px 15px rgba(255, 77, 109, 0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="instruction-header">
+        <div class="tap-msg">POP ALL HEARTS TO REFRESH (<span id="count">0</span> LEFT)</div>
+    </div>
+
+    <button id="request-gyro">ACTIVATE TILT PHYSICS</button>
+
+    <div id="ui-layer">
+        <div class="wavy-container">
+            <span class="letter" style="--i:1">C</span><span class="letter" style="--i:2">a</span><span class="letter" style="--i:3">m</span><span class="letter" style="--i:4">p</span><span class="letter" style="--i:5">u</span><span class="letter" style="--i:6">s</span><span class="letter" style="--i:7">&nbsp;</span><span class="letter" style="--i:8">C</span><span class="letter" style="--i:9">u</span><span class="letter" style="--i:10">p</span><span class="letter" style="--i:11">i</span><span class="letter" style="--i:12">d</span>
+        </div>
+        <div class="subtitle">is upgrading...</div>
+        <div class="brand">Monpress at work</div>
+    </div>
+
+    <script>
+        
+        //feel free to use code. by Eli Monpress 
+        
+        const { Engine, Render, Runner, Bodies, Composite, Mouse, MouseConstraint, Events } = Matter;
+
+        const engine = Engine.create();
+        const world = engine.world;
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+
+        const render = Render.create({
+            element: document.body,
+            engine: engine,
+            options: { width, height, wireframes: false, background: 'transparent', pixelRatio: 1 }
+        });
+
+        Render.run(render);
+        Runner.run(Runner.create(), engine);
+
+        // Enclosed Screen Walls
+        const wallOptions = { isStatic: true, render: { visible: false } };
+        Composite.add(world, [
+            Bodies.rectangle(width/2, height + 25, width, 50, wallOptions), // Floor
+            Bodies.rectangle(width/2, -25, width, 50, wallOptions),         // Ceiling
+            Bodies.rectangle(-25, height/2, 50, height, wallOptions),        // Left
+            Bodies.rectangle(width + 25, height/2, 50, height, wallOptions)  // Right
+        ]);
+
+        function spawnBatch() {
+            const shapes = [];
+            // Adding a minimum of 22 balls, but scaled for screen size for better effect
+            const ballCount = Math.max(22, width < 600 ? 80 : 150); 
+            const heartCount = 10;
+
+            // Clickable Hearts
+            for (let i = 0; i < heartCount; i++) {
+                shapes.push(Bodies.circle(Math.random() * width, Math.random() * height, 24, {
+                    restitution: 0.8, friction: 0.01, label: 'heart',
+                    render: { sprite: { texture: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="50" height="50"><text y="35" x="5" font-size="32">❤️</text></svg>' } }
+                }));
+            }
+
+            // Ordinary Decoration Balls
+            for (let i = 0; i < ballCount; i++) {
+                shapes.push(Bodies.circle(Math.random() * width, Math.random() * height, Math.random() * 12 + 6, {
+                    restitution: 0.7, friction: 0.001, label: 'ordinary',
+                    render: { fillStyle: i % 2 === 0 ? '#ffccd5' : '#ffb3c1' }
+                }));
+            }
+            Composite.add(world, shapes);
+            updateCount();
+        }
+
+        function updateCount() {
+            const hearts = world.bodies.filter(b => b.label === 'heart');
+            document.getElementById('count').innerText = hearts.length;
+            if (hearts.length === 0) {
+                // Remove all ordinary balls before spawning new batch to keep performance clean
+                const balls = world.bodies.filter(b => b.label === 'ordinary');
+                Composite.remove(world, balls);
+                spawnBatch();
+            }
+        }
+
+        // Mouse/Touch Interactivity
+        const mouse = Mouse.create(render.canvas);
+        const mouseConstraint = MouseConstraint.create(engine, {
+            mouse: mouse,
+            constraint: { stiffness: 0.1, render: { visible: false } }
+        });
+        Composite.add(world, mouseConstraint);
+
+        // Pop logic
+        Events.on(mouseConstraint, 'mousedown', (e) => {
+            const clickedHeart = world.bodies.find(b => b.label === 'heart' && Matter.Bounds.contains(b.bounds, e.mouse.position));
+            if (clickedHeart) {
+                Composite.remove(world, clickedHeart);
+                updateCount();
+            }
+        });
+
+        // Gyroscope Logic
+        const gyroBtn = document.getElementById('request-gyro');
+        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+            gyroBtn.style.display = 'block';
+            gyroBtn.onclick = () => {
+                DeviceOrientationEvent.requestPermission().then(res => {
+                    if (res === 'granted') {
+                        window.addEventListener('deviceorientation', handleOrientation);
+                        gyroBtn.style.display = 'none';
+                    }
+                });
+            };
+        } else {
+            window.addEventListener('deviceorientation', handleOrientation);
+        }
+
+        function handleOrientation(event) {
+            engine.gravity.x = event.gamma / 25;
+            engine.gravity.y = event.beta / 25;
+        }
+
+        spawnBatch();
+        window.addEventListener('resize', () => { location.reload(); });
+    </script>
+</body>
+</html>

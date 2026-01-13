@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Payment | Campus Cupid</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: sans-serif; background: #0f172a; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .pay-card { background: #1e293b; padding: 30px; border-radius: 20px; width: 90%; max-width: 400px; text-align: center; border: 1px solid #fbbf24; }
+        .price { font-size: 2.5rem; color: #fbbf24; margin: 20px 0; }
+        .pay-btn { background: #fbbf24; color: #000; border: none; padding: 15px; width: 100%; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 1.1rem; }
+        .loading { display: none; margin-top: 20px; color: #94a3b8; }
+    </style>
+</head>
+<body>
+
+<div class="pay-card">
+    <i class="fa-solid fa-shield-halved" style="font-size: 3rem; color: #fbbf24;"></i>
+    <h2>Secure Checkout</h2>
+    <p>Amount to Pay:</p>
+    <div class="price" id="display-amt">$0.00</div>
+    
+    <div id="form-ui">
+        <input type="text" placeholder="Card Number" style="width:100%; padding:12px; margin-bottom:10px; border-radius:5px; border:none;">
+        <button class="pay-btn" onclick="processPayment()">Confirm Payment</button>
+    </div>
+
+    <div id="status" class="loading">
+        <i class="fa-solid fa-circle-notch fa-spin"></i> Processing...
+    </div>
+</div>
+
+<script>
+    const supabaseClient = window.supabase.createClient("https://vfbjwkfurleatfdrabdg.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmYmp3a2Z1cmxlYXRmZHJhYmRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MjAwNDIsImV4cCI6MjA3Mjk5NjA0Mn0.hguIfyynGc19tsSm9u66qy5IeUv40_mE8-JBjqnOQBE");
+
+    // Get Data from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const amount = urlParams.get('amt');
+    const orderId = urlParams.get('oid');
+
+    document.getElementById('display-amt').innerText = `$${amount}`;
+
+    async function processPayment() {
+        document.getElementById('form-ui').style.display = 'none';
+        document.getElementById('status').style.display = 'block';
+
+        // Simulate a 2-second payment delay
+        setTimeout(async () => {
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            
+            if(user && orderId) {
+                // 1. Notify the Chat that payment was successful
+                await supabaseClient.from('market_chats').insert([{
+                    text: "✅ PAYMENT SUCCESSFUL: Your payment has been verified. You can now download your receipt.",
+                    user_id: user.id,
+                    order_id: orderId,
+                    is_admin_reply: true // Shows as a system/admin message
+                }]);
+
+                // 2. Optional: Update the order status in the 'orders' table
+                await supabaseClient.from('orders').update({ status: 'Paid' }).eq('id', orderId);
+
+                document.getElementById('status').innerHTML = "✅ Success! Redirecting...";
+                
+                // 3. Redirect back to Marketplace after 1.5 seconds
+                setTimeout(() => {
+                    window.location.href = "marketplace.html"; 
+                }, 1500);
+            } else {
+                alert("Error: Missing Session or Order ID");
+                window.location.href = "marketplace.html";
+            }
+        }, 2000);
+    }
+</script>
+</body>
+</html>

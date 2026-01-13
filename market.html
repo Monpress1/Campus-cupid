@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Marketplace | Campus Cupid ❤️</title>
+  
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="https://js.paystack.co/v1/inline.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    :root { --primary: #fbbf24; --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --input-bg: rgba(255,255,255,0.05); }
+    body.light-mode { --bg: #f8fafc; --card: #ffffff; --text: #0f172a; --input-bg: rgba(0,0,0,0.05); }
+    
+    body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; transition: 0.3s; }
+    
+    header { padding: 1.5rem 1rem; display: flex; flex-direction: column; gap: 18px; background: var(--card); position: sticky; top:0; z-index: 1000; border-bottom: 1px solid rgba(128,128,128,0.1); }
+    .nav-top { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+    
+    .search-container { position: relative; width: 100%; }
+    .search-input { width: 100%; padding: 14px 15px 14px 45px; border-radius: 14px; border: 1px solid rgba(128,128,128,0.2); background: var(--input-bg); color: var(--text); box-sizing: border-box; font-size: 1rem; outline: none; }
+    .search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); opacity: 0.5; font-size: 1.1rem; }
+
+    #side-menu { position: fixed; left: -300px; top: 0; width: 280px; height: 100vh; background: var(--card); z-index: 5000; transition: 0.4s; display: flex; flex-direction: column; box-shadow: 2px 0 15px rgba(0,0,0,0.5); }
+    #side-menu.open { left: 0; }
+    #order-history { flex: 1; overflow-y: auto; padding: 0 20px 20px; }
+    #menu-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 4000; }
+
+    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 6000; backdrop-filter: blur(4px); }
+    .modal-content { position: absolute; bottom: 0; width: 100%; max-width: 500px; left: 50%; transform: translateX(-50%); background: var(--bg); height: 85vh; border-radius: 24px 24px 0 0; display: flex; flex-direction: column; }
+    
+    .chat-body { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+    .delivery-card { background: var(--card); padding: 20px; border-radius: 16px; border: 1px solid rgba(128,128,128,0.2); }
+    .input-group { margin-bottom: 12px; }
+    .input-group label { display: block; font-size: 0.7rem; font-weight: 700; margin-bottom: 4px; opacity: 0.6; text-transform: uppercase; }
+    .input-group input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(128,128,128,0.2); background: var(--input-bg); color: var(--text); box-sizing: border-box; }
+
+    .msg { padding: 12px 16px; border-radius: 18px; max-width: 85%; font-size: 0.9rem; line-height: 1.4; white-space: pre-line; }
+    .msg.user { background: var(--primary); color: #000; align-self: flex-end; border-bottom-right-radius: 4px; }
+    .msg.admin { background: var(--card); border: 1px solid rgba(128,128,128,0.2); align-self: flex-start; border-bottom-left-radius: 4px; }
+
+    .action-bar { padding: 15px 20px; background: var(--card); border-top: 1px solid rgba(128,128,128,0.1); display: flex; gap: 10px; }
+    .pay-btn { background: var(--primary); color: #000; border: none; padding: 14px; border-radius: 12px; font-weight: 700; cursor: pointer; flex: 1; }
+    
+    .order-item { background: var(--input-bg); padding: 12px; border-radius: 10px; margin-bottom: 10px; cursor: pointer; border-left: 4px solid var(--primary); position: relative; }
+    .notif-dot { position: absolute; right: 12px; top: 12px; background: #ef4444; width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 5px #ef4444; }
+    .menu-notif { position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; font-size: 0.6rem; padding: 2px 6px; border-radius: 10px; border: 2px solid var(--card); }
+
+    .products-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 15px; }
+    .prod-img { width: 100%; aspect-ratio: 1/1; border-radius: 10px; background-size: cover; background-position: center; }
+  </style>
+</head>
+<body class="dark-mode">
+
+<div id="menu-overlay" onclick="toggleMenu()"></div>
+
+<header>
+  <div class="nav-top">
+    <button onclick="toggleMenu()" style="background:none; border:none; color:var(--text); font-size:1.3rem; position:relative;">
+        <i class="fa-solid fa-bars"></i>
+        <span id="menu-notif-badge" class="menu-notif" style="display:none">0</span>
+    </button>
+    <div style="font-weight: 900; font-size: 1.3rem;">CAMPUS CUPID</div>
+    <div style="display: flex; gap: 18px; align-items: center;">
+        <button onclick="toggleTheme()" style="background:none; border:none; color:var(--text); font-size: 1.2rem">
+            <i id="theme-icon" class="fa-solid fa-moon"></i>
+        </button>
+        <button onclick="openActiveChat()" style="background:none; border:none; color:var(--text); position:relative; font-size:1.2rem">
+          <i class="fa-solid fa-cart-shopping"></i>
+          <span id="cart-badge" style="display:none; position:absolute; top:-8px; right:-8px; background:#ef4444; color:white; font-size:0.6rem; padding:2px 5px; border-radius:10px">0</span>
+        </button>
+    </div>
+  </div>
+  <div class="search-container">
+    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+    <input type="text" class="search-input" id="search-bar" placeholder="Search products..." onkeyup="filterProducts()">
+  </div>
+</header>
+
+<div id="side-menu">
+  <div style="padding:30px 25px 10px;">
+    <h3 id="menu-user-name" style="margin:0">Guest</h3>
+    <p style="font-size: 0.8rem; color: var(--primary); margin: 6px 0 25px; font-weight: 600;">ORDER HISTORY</p>
+  </div>
+  <div id="order-history"></div>
+</div>
+
+<div class="products-grid" id="p-grid"></div>
+
+<div id="chat-modal" class="modal">
+  <div class="modal-content">
+    <div style="padding:15px; border-bottom:1px solid rgba(128,128,128,0.1); display:flex; justify-content:space-between; align-items:center;">
+      <span id="modal-title" style="font-weight: 700;">Checkout</span>
+      <button onclick="closeChat()" style="background:none; border:none; color:var(--text); font-size:1.5rem">&times;</button>
+    </div>
+
+    <div class="chat-body" id="chat-box">
+        <div id="delivery-section" class="delivery-card">
+            <div class="input-group"><label>Full Name</label><input type="text" id="inf-name"></div>
+            <div class="input-group"><label>Phone Number</label><input type="tel" id="inf-phone"></div>
+            <div class="input-group"><label>Delivery Address</label><input type="text" id="inf-address"></div>
+            <button class="pay-btn" onclick="submitDelivery()" style="width:100%">Continue to Payment</button>
+        </div>
+        <div id="messages-area"></div>
+    </div>
+
+    <div id="payment-area" class="action-bar" style="display:none">
+        <button class="pay-btn" id="paystack-trigger">Confirm and Pay <span id="pay-total-display"></span></button>
+    </div>
+    
+    <div id="reply-area" class="action-bar" style="display:none">
+        <input type="text" id="admin-reply-input" placeholder="Message admin..." style="flex:1; padding:12px; border-radius:12px; border:none; background:var(--input-bg); color:var(--text); outline:none;">
+        <button onclick="sendUserMsg()" style="background:var(--primary); color:#000; border:none; width:48px; border-radius:12px;"><i class="fa-solid fa-paper-plane"></i></button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const supabaseClient = window.supabase.createClient("https://vfbjwkfurleatfdrabdg.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmYmp3a2Z1cmxlYXRmZHJhYmRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MjAwNDIsImV4cCI6MjA3Mjk5NjA0Mn0.hguIfyynGc19tsSm9u66qy5IeUv40_mE8-JBjqnOQBE");
+  const PAYSTACK_KEY = 'pk_live_d425d16ee8cebccd2fd132fe4dae2cbf0ee5a579';
+
+  let cart = [], activeOrderId = null, allProducts = [], unreadOrders = new Set();
+
+  async function init() {
+    if(localStorage.getItem('theme') === 'light') toggleTheme(true);
+    
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if(user) {
+        document.getElementById('menu-user-name').innerText = user.user_metadata?.full_name || "User";
+        document.getElementById('inf-name').value = localStorage.getItem('cc_name') || "";
+        document.getElementById('inf-phone').value = localStorage.getItem('cc_phone') || "";
+        document.getElementById('inf-address').value = localStorage.getItem('cc_address') || "";
+        
+        supabaseClient.channel('chat_updates').on('postgres_changes', { event: 'INSERT', table: 'market_chats' }, payload => {
+            if(payload.new.order_id === activeOrderId) refreshChat();
+            else if(payload.new.is_admin_reply) {
+                unreadOrders.add(payload.new.order_id);
+                updateMenuBadge();
+            }
+        }).subscribe();
+    }
+    loadProducts();
+  }
+
+  function toggleTheme(initOnly = false) {
+    const b = document.body;
+    const icon = document.getElementById('theme-icon');
+    if(!initOnly) b.classList.toggle('light-mode');
+    else if(localStorage.getItem('theme') === 'light') b.classList.add('light-mode');
+    const isLight = b.classList.contains('light-mode');
+    icon.className = isLight ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+    localStorage.setItem('theme', isLight ? 'light' : 'dark');
+  }
+
+  async function loadProducts() {
+    const { data } = await supabaseClient.from('products').select('*').order('created_at', {ascending: false});
+    allProducts = data || [];
+    renderProducts(allProducts);
+  }
+
+  function renderProducts(products) {
+    document.getElementById('p-grid').innerHTML = products.map(p => `
+      <div style="background:var(--card); padding:10px; border-radius:15px; border: 1px solid rgba(128,128,128,0.1)">
+        <div class="prod-img" style="background-image:url('${p.image_url}')"></div>
+        <div style="font-size:0.9rem; font-weight:700; margin:10px 0 4px">${p.name}</div>
+        <div style="color:var(--primary); font-weight:800; margin-bottom:10px">KES ${p.price}</div>
+        <button class="pay-btn" style="padding:10px; font-size:0.75rem; width:100%" onclick="addCart('${p.id}','${p.name}',${p.price})">Add to Cart</button>
+      </div>
+    `).join('');
+  }
+
+  function filterProducts() {
+    const term = document.getElementById('search-bar').value.toLowerCase();
+    const filtered = allProducts.filter(p => p.name.toLowerCase().includes(term));
+    renderProducts(filtered);
+  }
+
+  async function submitDelivery() {
+    const name = document.getElementById('inf-name').value.trim();
+    const phone = document.getElementById('inf-phone').value.trim();
+    const addr = document.getElementById('inf-address').value.trim();
+    if(!name || !phone || !addr) return alert("Please fill all details");
+
+    localStorage.setItem('cc_name', name);
+    localStorage.setItem('cc_phone', phone);
+    localStorage.setItem('cc_address', addr);
+
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if(!user) return alert("Please login first");
+
+    const total = cart.reduce((s,i) => s + i.price, 0);
+    const itemList = cart.map(c => "- " + c.name + " (KES " + c.price + ")").join('\n');
+
+    const { data: order, error } = await supabaseClient.from('orders').insert([{ user_id: user.id, items: cart, total_price: total, status: 'Processing' }]).select();
+    
+    if(error) return alert("Order Error: " + error.message);
+    activeOrderId = order[0].id;
+
+    const summary = "NEW ORDER SUMMARY:\n" + itemList + "\n\nTOTAL: KES " + total + "\n\nDELIVERY INFO:\nName: " + name + "\nPhone: " + phone + "\nAddress: " + addr;
+    await postMsg(summary, false);
+    
+    document.getElementById('delivery-section').style.display = 'none';
+    document.getElementById('pay-total-display').innerText = "KES " + total;
+    document.getElementById('payment-area').style.display = 'block';
+    
+    document.getElementById('paystack-trigger').onclick = function() { startPaystack(user.email, total); };
+    cart = []; document.getElementById('cart-badge').style.display = 'none';
+  }
+
+  function startPaystack(email, total) {
+    const handler = PaystackPop.setup({
+      key: PAYSTACK_KEY, email, amount: total * 100, currency: 'KES', ref: 'ORD-' + activeOrderId.slice(0,8),
+      callback: function(res) { handlePaymentSuccess(res.reference); }
+    });
+    handler.openIframe();
+  }
+
+  async function handlePaymentSuccess(ref) {
+      await supabaseClient.from('orders').update({ status: 'Shipping' }).eq('id', activeOrderId);
+      await postMsg("Payment Confirmed! Ref: " + ref + "\nStatus updated to: SHIPPING", false);
+      document.getElementById('payment-area').style.display = 'none';
+      document.getElementById('reply-area').style.display = 'flex';
+  }
+
+  function toggleMenu() {
+    const m = document.getElementById('side-menu');
+    const o = document.getElementById('menu-overlay');
+    const open = m.classList.toggle('open');
+    o.style.display = open ? 'block' : 'none';
+    if(open) loadHistory();
+  }
+
+  // FIXED: Added safety check for null user
+  async function loadHistory() {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    const historyBox = document.getElementById('order-history');
+    
+    if(!user) {
+        historyBox.innerHTML = "<p style='padding:20px; opacity:0.5'>Please log in to view orders.</p>";
+        return;
+    }
+
+    const { data: orders } = await supabaseClient.from('orders').select('*').eq('user_id', user.id).order('created_at', {ascending:false});
+    
+    if(!orders || orders.length === 0) {
+        historyBox.innerHTML = "<p style='padding:20px; opacity:0.5'>No orders found.</p>";
+        return;
+    }
+
+    historyBox.innerHTML = orders.map(o => `
+      <div class="order-item" onclick="viewOrder('${o.id}', ${o.total_price})">
+        ${unreadOrders.has(o.id) ? '<div class="notif-dot"></div>' : ''}
+        <b>ID: ${o.id.slice(0,5)}</b> - KES ${o.total_price}<br>
+        <small>${o.status}</small>
+      </div>
+    `).join('');
+  }
+
+  function viewOrder(id, total) {
+    activeOrderId = id; unreadOrders.delete(id); updateMenuBadge(); toggleMenu();
+    document.getElementById('delivery-section').style.display = 'none';
+    document.getElementById('payment-area').style.display = 'none';
+    document.getElementById('reply-area').style.display = 'flex';
+    document.getElementById('chat-modal').style.display = 'block';
+    document.getElementById('modal-title').innerText = "Order " + id.slice(0,5);
+    refreshChat();
+  }
+
+  function updateMenuBadge() {
+    const badge = document.getElementById('menu-notif-badge');
+    if(unreadOrders.size > 0) { badge.style.display = 'block'; badge.innerText = unreadOrders.size; }
+    else { badge.style.display = 'none'; }
+  }
+
+  async function sendUserMsg() {
+    const inp = document.getElementById('admin-reply-input');
+    if(!inp.value.trim()) return;
+    await postMsg(inp.value, false);
+    inp.value = "";
+  }
+
+  async function postMsg(txt, isAdmin) {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if(!user) return;
+    await supabaseClient.from('market_chats').insert([{ text: txt, user_id: user.id, order_id: activeOrderId, is_admin_reply: isAdmin }]);
+    refreshChat();
+  }
+
+  async function refreshChat() {
+    if(!activeOrderId) return;
+    const { data: msgs } = await supabaseClient.from('market_chats').select('*').eq('order_id', activeOrderId).order('created_at', {ascending: true});
+    document.getElementById('messages-area').innerHTML = (msgs || []).map(m => `
+      <div class="msg ${m.is_admin_reply ? 'admin' : 'user'}">${m.text.replace(/\n/g, '<br>')}</div>
+    `).join('');
+    const b = document.getElementById('chat-box'); b.scrollTop = b.scrollHeight;
+  }
+
+  function addCart(id, name, price) {
+    cart.push({id, name, price});
+    const b = document.getElementById('cart-badge');
+    b.style.display = 'block'; b.innerText = cart.length;
+  }
+
+  function openActiveChat() {
+    if(cart.length > 0) {
+      document.getElementById('delivery-section').style.display = 'block';
+      document.getElementById('payment-area').style.display = 'none';
+      document.getElementById('reply-area').style.display = 'none';
+      document.getElementById('messages-area').innerHTML = "";
+      document.getElementById('chat-modal').style.display = 'block';
+      document.getElementById('modal-title').innerText = "Checkout";
+    } else if (activeOrderId) {
+      document.getElementById('chat-modal').style.display = 'block';
+    } else { alert("Your cart is empty!"); }
+  }
+
+  function closeChat() { document.getElementById('chat-modal').style.display = 'none'; activeOrderId = null; }
+
+  init();
+</script>
+</body>
+</html>

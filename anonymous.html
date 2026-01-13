@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ghost Mode | Campus Cupid</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Pacifico&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #fbbf24;
+            --primary-glow: rgba(251, 191, 36, 0.3);
+            --bg: #020617;
+            --card-bg: rgba(30, 41, 59, 0.5);
+            --text: #f8fafc;
+            --text-dim: #94a3b8;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Outfit', sans-serif;
+            background: radial-gradient(circle at top right, #1e1b4b, #020617);
+            color: var(--text);
+            min-height: 100vh;
+            padding-bottom: 50px;
+        }
+
+        /* Animated Background Elements */
+        .glow-sphere {
+            position: fixed; top: -100px; right: -100px; width: 300px; height: 300px;
+            background: var(--primary-glow); filter: blur(100px); border-radius: 50%; z-index: -1;
+        }
+
+        /* Navbar */
+        .navbar {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 1.5rem 2rem; position: sticky; top: 0; z-index: 1000;
+            background: rgba(2, 6, 23, 0.8); backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .back-btn { color: var(--text-dim); font-size: 1.2rem; transition: 0.3s; }
+        .back-btn:hover { color: var(--primary); transform: translateX(-3px); }
+        .logo-text { font-family: 'Pacifico', cursive; color: var(--primary); font-size: 1.4rem; }
+
+        .container { max-width: 550px; margin: 2rem auto; padding: 0 1rem; }
+
+        /* Ghost Mode Card */
+        .anon-card {
+            background: var(--card-bg); backdrop-filter: blur(16px);
+            border-radius: 24px; padding: 2rem; border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .status-badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: rgba(16, 185, 129, 0.1); color: #10b981;
+            padding: 6px 12px; border-radius: 100px; font-size: 0.8rem;
+            font-weight: 600; margin-bottom: 1.5rem; border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        h1 { font-size: 1.8rem; margin: 0 0 0.5rem 0; font-weight: 600; }
+        p.subtitle { color: var(--text-dim); margin-bottom: 1.5rem; font-size: 0.95rem; }
+
+        textarea {
+            width: 100%; min-height: 150px; background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 18px;
+            padding: 1.2rem; color: #fff; font-size: 1rem; line-height: 1.6;
+            resize: none; margin-bottom: 1.5rem; box-sizing: border-box; transition: 0.3s;
+        }
+        textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-glow); outline: none; }
+
+        .submit-btn {
+            width: 100%; background: var(--primary); color: #020617; border: none;
+            padding: 1.1rem; border-radius: 16px; font-weight: 700; font-size: 1rem;
+            cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -5px var(--primary-glow); }
+        .submit-btn:disabled { opacity: 0.5; transform: none; }
+
+        /* Mini Feed Styling */
+        .section-title { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 2px; color: var(--text-dim); margin: 3rem 0 1.5rem 10px; }
+
+        .feed-item {
+            background: rgba(255,255,255,0.03); border-radius: 20px;
+            padding: 1.5rem; margin-bottom: 1.2rem; border: 1px solid rgba(255,255,255,0.05);
+            transition: 0.3s;
+        }
+        .feed-item:hover { background: rgba(255,255,255,0.06); }
+        
+        .feed-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .anon-icon { 
+            width: 35px; height: 35px; background: #334155; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; color: var(--primary);
+            border: 1px solid var(--primary-glow);
+        }
+        .anon-name { font-weight: 600; font-size: 0.95rem; }
+        .feed-content { line-height: 1.5; color: #cbd5e1; font-size: 1rem; }
+        .feed-time { font-size: 0.7rem; color: var(--text-dim); margin-top: 15px; display: block; }
+
+    </style>
+</head>
+<body>
+
+    <div class="glow-sphere"></div>
+
+    <div class="navbar">
+        <a href="feed.html" class="back-btn"><i class="fa-solid fa-chevron-left"></i></a>
+        <span class="logo-text">Campus Cupid</span>
+        <div style="width: 24px;"></div> </div>
+
+    <div class="container">
+        <div class="anon-card">
+            <div class="status-badge">
+                <i class="fa-solid fa-shield-halved"></i> Identity Encrypted
+            </div>
+            <h1>Ghost Mode</h1>
+            <p class="subtitle">Your secret is safe with us. Posted confessions will appear on the main feed without your name.</p>
+            
+            <textarea id="postContent" placeholder="Write your confession here..."></textarea>
+            
+            <button id="submitBtn" class="submit-btn">
+                <i class="fa-solid fa-paper-plane"></i> Send Confession
+            </button>
+        </div>
+
+        <h2 class="section-title">Recent Secrets</h2>
+        <div id="anonFeed">
+            <div style="text-align: center; color: var(--text-dim); padding: 2rem;">
+                <i class="fa-solid fa-circle-notch fa-spin"></i> Loading secrets...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Renamed variable to avoid declaration errors
+        const ghostSupabase = window.supabase.createClient(
+            "https://vfbjwkfurleatfdrabdg.supabase.co", 
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmYmp3a2Z1cmxlYXRmZHJhYmRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MjAwNDIsImV4cCI6MjA3Mjk5NjA0Mn0.hguIfyynGc19tsSm9u66qy5IeUv40_mE8-JBjqnOQBE"
+        );
+
+        const postInput = document.getElementById('postContent');
+        const submitBtn = document.getElementById('submitBtn');
+        const feedContainer = document.getElementById('anonFeed');
+
+        submitBtn.addEventListener('click', async () => {
+            const content = postInput.value.trim();
+            if (!content) return;
+
+            const { data: { user } } = await ghostSupabase.auth.getUser();
+            if (!user) return alert("You must be logged in to post.");
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Vanishing...`;
+
+            const { error } = await ghostSupabase.from('posts').insert({
+                author_id: user.id,
+                content: content,
+                is_anonymous: true 
+            });
+
+            if (error) {
+                alert("Something went wrong: " + error.message);
+            } else {
+                postInput.value = "";
+                loadPosts();
+                // Optional: redirect to feed after success
+                // window.location.href = "feed.html";
+            }
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Send Confession`;
+        });
+
+        async function loadPosts() {
+            const { data: posts, error } = await ghostSupabase
+                .from('posts')
+                .select('*')
+                .eq('is_anonymous', true)
+                .order('created_at', { ascending: false })
+                .limit(10);
+
+            if (posts) {
+                if (posts.length === 0) {
+                    feedContainer.innerHTML = `<p style="text-align:center; color:var(--text-dim);">No secrets yet. Be the first!</p>`;
+                    return;
+                }
+                feedContainer.innerHTML = posts.map(p => `
+                    <div class="feed-item">
+                        <div class="feed-header">
+                            <div class="anon-icon"><i class="fa-solid fa-user-secret"></i></div>
+                            <span class="anon-name">Anonymous Cupidian</span>
+                        </div>
+                        <div class="feed-content">${p.content}</div>
+                        <span class="feed-time">${new Date(p.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} • ${new Date(p.created_at).toLocaleDateString()}</span>
+                    </div>
+                `).join('');
+            }
+        }
+
+        loadPosts();
+    </script>
+</body>
+</html>

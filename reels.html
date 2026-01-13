@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>campusCupid | Lite Reels Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --accent: #ff4500; --bg: #000; --panel: #121212; }
+        body, html { margin: 0; padding: 0; background: var(--bg); height: 100vh; overflow: hidden; font-family: 'Montserrat', sans-serif; color: white; }
+        
+        /* 1-by-1 Snapping */
+        #reels-container { 
+            height: 100vh; overflow-y: scroll; 
+            scroll-snap-type: y mandatory; 
+            scrollbar-width: none; 
+        }
+        #reels-container::-webkit-scrollbar { display: none; }
+        
+        .reel-slide { 
+            height: 100vh; width: 100vw; 
+            scroll-snap-align: start; 
+            scroll-snap-stop: always; 
+            position: relative; background: #000; overflow: hidden; 
+        }
+
+        .video-wrapper { width: 100%; height: 100%; position: relative; cursor: pointer; }
+        
+        /* 360p Upscaling + Centering */
+        iframe { 
+            position: absolute; top: 50%; left: 50%; width: 100%; height: 100%; 
+            transform: translate(-50%, -50%) scale(1.35); border: none; pointer-events: none; 
+        }
+
+        /* HUD UI */
+        header { position: fixed; top: 25px; left: 20px; z-index: 100; pointer-events: none; }
+        .brand { font-size: 22px; text-shadow: 2px 2px 10px rgba(0,0,0,0.9); }
+        
+        #sound-btn { 
+            position: fixed; top: 25px; right: 20px; z-index: 1000; 
+            background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.2); 
+            padding: 8px 15px; border-radius: 20px; color: white; cursor: pointer; 
+            backdrop-filter: blur(10px); font-size: 11px; 
+        }
+
+        /* Interaction Buttons */
+        .actions { position: absolute; right: 15px; bottom: 100px; display: flex; flex-direction: column; gap: 20px; z-index: 100; }
+        .btn-box { display: flex; flex-direction: column; align-items: center; }
+        .circle-btn { 
+            background: rgba(255,255,255,0.12); border-radius: 50%; width: 52px; height: 52px; 
+            display: flex; align-items: center; justify-content: center; cursor: pointer; 
+            font-size: 22px; border: 1px solid rgba(255,255,255,0.1); transition: 0.1s; 
+        }
+        .circle-btn:active { transform: scale(0.85); }
+        .liked i { color: var(--accent); animation: pop 0.3s ease; }
+        .counter { font-size: 12px; text-align: center; margin-top: 5px; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+
+        /* Overlay Text */
+        .overlay { position: absolute; bottom: 40px; left: 20px; right: 85px; z-index: 10; pointer-events: none; text-shadow: 0 2px 5px rgba(0,0,0,0.9); }
+
+        /* Comment Bottom Sheet */
+        #comment-panel { 
+            position: fixed; bottom: -70%; left: 0; width: 100%; height: 65%; 
+            background: var(--panel); z-index: 2001; border-radius: 25px 25px 0 0; 
+            transition: transform 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.1); 
+            display: flex; flex-direction: column; box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
+        }
+        #comment-panel.active { transform: translateY(-100%); }
+        .comment-header { padding: 18px; text-align: center; border-bottom: 1px solid #252525; font-size: 14px; letter-spacing: 1px; font-weight: bold; }
+        
+        #comment-list { flex: 1; overflow-y: auto; padding: 20px; -webkit-overflow-scrolling: touch; }
+        .comment-item { margin-bottom: 20px; display: flex; gap: 12px; font-family: -apple-system, system-ui, sans-serif; }
+        .comment-item img { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; background: #333; }
+        .comment-content { flex: 1; }
+        .comment-user { font-weight: 700; font-size: 12px; color: #999; margin-bottom: 3px; }
+        .comment-text { font-size: 14px; line-height: 1.5; color: #efefef; }
+
+        @keyframes pop { 50% { transform: scale(1.5); } }
+        @keyframes fly { 0% { opacity:1; transform: scale(1); } 100% { opacity:0; transform: translateY(-130px) scale(2) rotate(20deg); } }
+    </style>
+</head>
+<body>
+
+    <header><div class="brand">campusCupid</div></header>
+    <button id="sound-btn" onclick="toggleMute()">🔇 click for sound</button>
+
+    <div id="reels-container"></div>
+
+    <div id="comment-panel">
+        <div class="comment-header">COMMENTS <span onclick="closeComments()" style="position:absolute; right:20px; cursor:pointer; color:#666;">✕</span></div>
+        <div id="comment-list"></div>
+    </div>
+
+    <script>
+        const API_KEY = 'AIzaSyBUlSgRfLcRLCqlc3YEFY-hUqb4Zj3OAUI';
+        const CHANNELS = [
+            'UCOOUj-jLIdVAKdd6vUwrr7g', 
+            'UCQ6Rz-xt3RAOcuFPHuaW28A', 
+            ' UCaxDQPgwgAaD1PJm20EwGzg',
+            'UCIDC-BfSLc5cvWVaUEwiNkg',
+            'UC0jIAp_JOrLr0i3vE87m0-g',
+            'UCBp5S_nBBRGApsFgAiw8Qqg',
+            'UCkGCzMZiIV-NQzs_v2J3vng',
+            'UCtiRdf89uO1eGf1iroMY10Q',
+            'UCOtrL-eNP0FfhBlIOh0FRvA',
+            'UCW5O60WoF9LXay8U1lmXFdg',
+            'UCm5PEWMZ0nxkAqwyYclqWSQ',
+            'UCEA-HC1Nrt0AO-kYTB8RNgQ',
+            'UCIV43VnKEtYkN2de0BmT0-Q',
+            'UCOXE5h2UItJNYML2NJtsMRQ',
+            'UC4z-9mbCeyiLxKYMI4mjTjQ', 
+            'UCX6OQ3DkcsbYNE6H8uQQuVA'
+        ];
+        
+        let masterPool = [];
+        let isMuted = true;
+
+        async function init() {
+            const fetchPromises = CHANNELS.map(id => {
+                const pId = id.replace('UC', 'UU');
+                return fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${pId}&maxResults=40&key=${API_KEY}`)
+                    .then(r => r.json())
+                    .catch(() => null);
+            });
+
+            const results = await Promise.all(fetchPromises);
+            results.forEach(d => { if(d && d.items) masterPool.push(...d.items); });
+
+            // TRUE RANDOM: Fisher-Yates Shuffle + Random Start Index
+            for (let i = masterPool.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [masterPool[i], masterPool[j]] = [masterPool[j], masterPool[i]];
+            }
+            
+            const startIdx = Math.floor(Math.random() * masterPool.length);
+            const finalPool = [...masterPool.slice(startIdx), ...masterPool.slice(0, startIdx)];
+
+            render(finalPool);
+        }
+
+        function render(data) {
+            const container = document.getElementById('reels-container');
+            container.innerHTML = data.map(item => {
+                const vId = item.snippet.resourceId.videoId;
+                const likes = Math.floor(Math.random() * 80000) + 20000;
+                const commentsCount = Math.floor(likes / 12);
+
+                return `
+                <div class="reel-slide">
+                    <div class="video-wrapper" onclick="handleTap(this)" data-id="${vId}"></div>
+                    <div class="actions">
+                        <div class="btn-box">
+                            <div class="circle-btn" onclick="handleLike(this)"><i class="fa-solid fa-heart"></i></div>
+                            <span class="counter" data-raw="${likes}">${(likes/1000).toFixed(1)}K</span>
+                        </div>
+                        <div class="btn-box">
+                            <div class="circle-btn" onclick="openComments('${vId}')"><i class="fa-solid fa-comment-dots"></i></div>
+                            <span class="counter">${(commentsCount/1000).toFixed(1)}K</span>
+                        </div>
+                    </div>
+                    <div class="overlay">
+                        <strong style="color:var(--accent); display:block; margin-bottom:5px;">@${item.snippet.channelTitle}</strong>
+                        <div style="font-size:14px; opacity:0.9;">${item.snippet.title.split('|')[0]}</div>
+                    </div>
+                </div>`;
+            }).join('');
+            
+            setupObserver();
+        }
+
+        function setupObserver() {
+            const observer = new IntersectionObserver(entries => {
+                entries.forEach(e => {
+                    const wrap = e.target.querySelector('.video-wrapper');
+                    if(e.isIntersecting) {
+                        if(!wrap.querySelector('iframe')) {
+                            const id = wrap.dataset.id;
+                            // FORCED 360p with vq=medium and no-cookie for speed
+                            wrap.insertAdjacentHTML('afterbegin', `<iframe src="https://www.youtube-nocookie.com/embed/${id}?enablejsapi=1&autoplay=1&mute=${isMuted?1:0}&controls=0&loop=1&playlist=${id}&vq=medium&modestbranding=1&rel=0" allow="autoplay"></iframe>`);
+                        } else {
+                            wrap.querySelector('iframe').contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+                        }
+                    } else {
+                        const frame = wrap.querySelector('iframe');
+                        if(frame) frame.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
+                    }
+                });
+            }, { threshold: 0.8 });
+            document.querySelectorAll('.reel-slide').forEach(s => observer.observe(s));
+        }
+
+        function handleTap(wrap) { 
+            const frame = wrap.querySelector('iframe');
+            if(frame) frame.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*'); 
+        }
+        
+        function handleLike(btn) {
+            if(btn.classList.contains('liked')) return;
+            btn.classList.add('liked');
+            
+            const countSpan = btn.nextElementSibling;
+            let val = parseInt(countSpan.dataset.raw) + 1;
+            countSpan.innerText = (val/1000).toFixed(1) + "K";
+
+            const heart = document.createElement('i');
+            heart.className = 'fa-solid fa-heart';
+            heart.style.cssText = "position:absolute; color:var(--accent); animation: fly 0.8s forwards; font-size:40px; pointer-events:none; z-index:1000;";
+            btn.appendChild(heart);
+            setTimeout(() => heart.remove(), 800);
+        }
+
+        async function openComments(vId) {
+            document.getElementById('comment-panel').classList.add('active');
+            const list = document.getElementById('comment-list');
+            list.innerHTML = '<div style="text-align:center; padding-top:20px; color:#555;">Loading top 20 comments...</div>';
+            try {
+                const res = await fetch(`https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=${vId}&maxResults=20&key=${API_KEY}`);
+                const data = await res.json();
+                
+                if(!data.items || data.items.length === 0) {
+                    list.innerHTML = '<div style="text-align:center; padding:40px; color:#555;">No comments found.</div>';
+                    return;
+                }
+
+                list.innerHTML = data.items.map(i => {
+                    const c = i.snippet.topLevelComment.snippet;
+                    return `
+                        <div class="comment-item">
+                            <img src="${c.authorProfileImageUrl}">
+                            <div class="comment-content">
+                                <div class="comment-user">${c.authorDisplayName}</div>
+                                <div class="comment-text">${c.textDisplay}</div>
+                            </div>
+                        </div>`;
+                }).join('');
+            } catch(e) { list.innerHTML = '<div style="text-align:center; padding:40px; color:#555;">Comments disabled for this video.</div>'; }
+        }
+
+        function closeComments() { document.getElementById('comment-panel').classList.remove('active'); }
+        
+        function toggleMute() {
+            isMuted = !isMuted;
+            document.getElementById('sound-btn').innerText = isMuted ? "🔇 Muted (360p Mode)" : "🔊 Sound On (360p Mode)";
+            document.querySelectorAll('iframe').forEach(f => {
+                const cmd = isMuted ? 'mute' : 'unMute';
+                f.contentWindow.postMessage(`{"event":"command","func":"${cmd}","args":""}`, '*');
+            });
+        }
+
+        init();
+    </script>
+</body>
+</html>
