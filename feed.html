@@ -1968,54 +1968,64 @@ async function registerServiceWorkerAndSubscribe() {
         console.error('Push Setup Error:', error);
     }
 }
-
 /**
- * IMITATED VERSION: Uses upsert and subscription_json
- */async function saveSubscriptionToSupabase(subscription) {
-    // Checkpoint 1: Just to see if the function is even being called
+ * IMPROVED: Only syncs if something changed or if it's a new device.
+ */
+async function smartSyncPush(subscription) {
+    const subJson = JSON.stringify(subscription.toJSON());
+    const lastSyncedSub = localStorage.getItem('last_push_sync_json');
+    const lastSyncTime = localStorage.getItem('last_push_sync_time');
+    
+    // 1. Check if the subscription is identical to the last one we saved
+    // 2. Also check if it's been more than 24 hours (optional "heartbeat" sync)
+    const oneDay = 24 * 60 * 60 * 1000;
+    const isExpired = !lastSyncTime || (Date.now() - parseInt(lastSyncTime) > oneDay);
+
+    if (subJson === lastSyncedSub && !isExpired) {
+        console.log("Push already synced recently. Skipping DB write.");
+        return; 
+    }
+
+    // Only if it's new or expired do we call your actual Supabase function
+    await saveSubscriptionToSupabase(subscription);
+}
+
+async function saveSubscriptionToSupabase(subscription) {
     console.log("Checkpoint 1: Syncing device..."); 
 
     try {
         const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
-        
-        if (authError || !user) {
-            alert("Error: You must be logged in to sync notifications.");
-            return;
-        }
+        if (authError || !user) return;
 
-        // Checkpoint 2: Attempting the actual Database write
+        const subObj = subscription.toJSON();
+
         const { error } = await supabaseClient
             .from('push_subscriptions')
             .upsert({
                 user_id: user.id,
-                subscription_json: subscription.toJSON(),
+                endpoint: subObj.endpoint, // Use endpoint as a unique key
+                subscription_json: subObj,
                 last_updated: new Date().toISOString()
             }, { 
-                onConflict: 'subscription_json' 
+                onConflict: 'endpoint' 
             });
 
-        if (error) {
-            // Checkpoint 3 (FAILED): Likely an RLS or Database issue
-            console.error("Database Error:", error);
-            alert("Sync Failed: " + error.message);
-        } else {
-            // Checkpoint 3 (SUCCESS): The row is in the table!
-            alert("Device Synced! 🎉");
+        if (!error) {
+            // SUCCESS: Save to localStorage so we don't do this again on next reload
+            localStorage.setItem('last_push_sync_json', JSON.stringify(subObj));
+            localStorage.setItem('last_push_sync_time', Date.now().toString());
 
-            // --- NOW TRIGGER THE WELCOME PUSH ---
+            // Only show the notification ONCE (when it's actually a new sync)
             const registration = await navigator.serviceWorker.ready;
-            await registration.showNotification("Notifications Enabled! ❤️", {
-                body: "You will now receive alerts for new likes and messages on Campus Cupid.",
-                icon: "/bot.jpg", 
-                badge: "/badge.png",
-                vibrate: [200, 100, 200]
+            await registration.showNotification("Notifications Active!", {
+                body: "Device successfully linked.",
+                icon: "/bot.jpg"
             });
         }
     } catch (err) {
-        alert("System Error: " + err.message);
+        console.error("System Error:", err.message);
     }
 }
-
 
 // Trigger on load (or use a button click for better mobile support)
 window.addEventListener('load', registerServiceWorkerAndSubscribe);
@@ -2027,3 +2037,4 @@ window.addEventListener('load', registerServiceWorkerAndSubscribe);
             
 </body>
 </html>
+
