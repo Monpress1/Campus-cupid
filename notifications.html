@@ -7,481 +7,495 @@
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Base Styles & Utilities */
+        /* --- CSS Variables & Theme Setup --- */
+        :root {
+            /* Dark Mode (Default) */
+            --bg-body: linear-gradient(135deg, #0f172a, #1e293b, #334155);
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+            --card-bg: rgba(255, 255, 255, 0.08);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --card-hover: rgba(255, 255, 255, 0.15);
+            --nav-bg: rgba(15, 23, 42, 0.9);
+            --highlight: #fbbf24; /* Amber/Gold */
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+        }
+
+        [data-theme="light"] {
+            /* Improved Light Mode - Soft Slate Grays */
+            --bg-body: #f1f5f9; /* Very light gray/blue background */
+            --text-main: #1e293b; /* Dark slate for text (sharp contrast) */
+            --text-sub: #64748b; /* Medium slate for subtext */
+            --card-bg: #ffffff;
+            --card-border: #e2e8f0;
+            --card-hover: #f8fafc;
+            --nav-bg: rgba(255, 255, 255, 0.95);
+            --highlight: #f59e0b; /* Darker amber for light mode visibility */
+            --shadow: 0 4px 6px -1px rgba(148, 163, 184, 0.15);
+        }
+
+        /* --- Base Styles --- */
         body {
             margin: 0;
-            font-family: "Segoe UI", Arial, sans-serif;
-            background: linear-gradient(135deg, #0f172a, #1e293b, #334155);
-            color: #fff;
+            font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+            background: var(--bg-body);
+            color: var(--text-main);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
             padding: 1rem;
+            transition: background 0.3s ease, color 0.3s ease;
         }
+
         .container {
             width: 100%;
             max-width: 600px;
+            padding-bottom: 2rem;
         }
+
+        /* --- Navbar --- */
         .navbar {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 1.5rem;
-            width: 100%;
-            position: relative;
+            padding: 0.8rem 1rem;
+            background: var(--nav-bg);
+            border-radius: 1rem;
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 10px;
+            z-index: 100;
+            box-shadow: var(--shadow);
         }
         .navbar h1 {
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             margin: 0;
+            font-weight: 700;
         }
-        .navbar i {
-            font-size: 1.5rem;
-            cursor: pointer;
-        }
-        .menu-content {
-            display: none;
-            position: absolute;
-            right: 0;
-            top: 30px;
-            background: rgba(30, 41, 59, 0.95);
-            border-radius: 0.5rem;
-            min-width: 150px;
-            padding: 0.5rem;
-            z-index: 100;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            animation: fadeIn 0.3s ease-in-out;
-        }
-        .menu-content a, .menu-content button {
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-            width: 100%;
-            padding: 0.7rem;
+        .nav-btn {
             background: none;
             border: none;
-            color: #fff;
-            text-align: left;
+            color: var(--text-main);
+            font-size: 1.2rem;
             cursor: pointer;
-            border-radius: 0.4rem;
-            text-decoration: none;
+            padding: 5px;
+            border-radius: 50%;
+            transition: background 0.2s;
         }
-        .menu-content a:hover, .menu-content button:hover {
-            background: rgba(255, 255, 255, 0.1);
+        .nav-btn:hover {
+            background: rgba(128, 128, 128, 0.2);
         }
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        .page-title {
-            text-align: center;
-            margin-bottom: 1.5rem;
-        }
+
+        /* --- Notification Items --- */
         .notification-list {
             display: flex;
             flex-direction: column;
-            gap: 1rem;
+            gap: 0.8rem;
+            margin-top: 10px;
         }
+
         .notification-item {
             display: flex;
-            align-items: center;
-            background: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(10px);
+            align-items: flex-start;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
             padding: 1rem;
-            border-radius: 0.75rem;
+            border-radius: 1rem;
             position: relative;
-            animation: fadeInItem 0.5s ease-out;
-            border-left: 4px solid transparent;
-            transition: all 0.3s ease;
-            cursor: pointer; /* Makes it look clickable */
+            animation: slideIn 0.3s ease-out;
+            transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            box-shadow: var(--shadow);
         }
+
+        /* Unread Indicator */
+        .notification-item.unread::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 15%;
+            bottom: 15%;
+            width: 4px;
+            background: var(--highlight);
+            border-radius: 0 4px 4px 0;
+        }
+        
         .notification-item.unread {
-            border-left: 4px solid #fbbf24;
+            background: var(--card-bg); /* Keep consistant background */
+            font-weight: 500;
         }
+
         .notification-item:hover {
-            background: rgba(255, 255, 255, 0.12);
+            transform: translateY(-2px);
+            background: var(--card-hover);
         }
-        @keyframes fadeInItem {
+
+        @keyframes slideIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+
+        /* --- Avatar & Icons --- */
+        .avatar-wrapper {
+            position: relative;
+            margin-right: 1rem;
+            flex-shrink: 0;
+        }
+        .notif-img {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--card-border);
+            background: #cbd5e1;
+        }
+        .notif-icon-placeholder {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: #475569;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            border: 2px solid var(--card-border);
+        }
+        .type-badge {
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #fff; /* Always white bg for icon clarity */
+            border: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            z-index: 2;
+        }
+
+        /* --- Content & Text --- */
         .notification-content {
             flex-grow: 1;
-            margin-right: 1rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
         .notification-content p {
-            margin: 0;
-            font-size: 1rem;
-            word-wrap: break-word;
+            margin: 0 0 4px 0;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            color: var(--text-main);
         }
         .notification-content small {
-            color: #94a3b8;
-            font-size: 0.8rem;
+            color: var(--text-sub);
+            font-size: 0.75rem;
         }
-        .notification-avatar {
-            width: 60px; /* Adjust width for oval shape */
-            height: 40px; /* Adjust height for oval shape */
-            border-radius: 50% / 100%; /* Creates an oval shape */
-            object-fit: cover;
-            margin-right: 1rem;
-            border: 2px solid #fbbf24;
-        }
-        .notification-avatar-placeholder {
-            width: 60px;
-            height: 40px;
-            border-radius: 50% / 100%;
-            background-color: #475569;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-right: 1rem;
-            font-size: 1.5rem;
-            color: #fff;
-            border: 2px solid #fbbf24;
-        }
+
+        /* --- Buttons --- */
         .notification-actions {
             display: flex;
             gap: 0.5rem;
-            flex-shrink: 0;
+            margin-top: 0.8rem;
         }
-        .notification-actions button {
-            background: #fbbf24;
-            color: #1e293b;
-            border: none;
-            padding: 0.5rem 0.8rem;
+        .action-btn {
+            padding: 0.4rem 1rem;
             border-radius: 0.5rem;
+            border: none;
+            font-size: 0.85rem;
+            font-weight: 600;
             cursor: pointer;
-            font-weight: bold;
-            transition: background 0.3s ease;
+            transition: opacity 0.2s;
         }
-        .notification-actions button.reject-btn {
-            background: #ef4444;
-            color: #fff;
-        }
-        .notification-actions button:hover {
-            opacity: 0.8;
-        }
+        .accept-btn { background: #10b981; color: white; }
+        .reject-btn { background: #ef4444; color: white; }
+        .action-btn:hover { opacity: 0.9; }
+
+        /* --- Empty State --- */
         #noNotifications {
             text-align: center;
-            color: #94a3b8;
-            margin-top: 5rem;
+            color: var(--text-sub);
+            margin-top: 4rem;
             display: none;
         }
-        /* Placeholder styling */
-        .placeholder-notification {
-            background: #334155;
-            border-radius: 0.75rem;
-            height: 70px;
-            animation: pulse 1.5s infinite ease-in-out;
+
+        /* --- Skeletons --- */
+        .skeleton {
+            background: var(--card-border);
+            opacity: 0.3;
+            border-radius: 1rem;
+            height: 80px;
+            animation: pulse 1.5s infinite;
+            margin-bottom: 10px;
         }
         @keyframes pulse {
-            0% { opacity: 0.6; }
-            50% { opacity: 1; }
-            100% { opacity: 0.6; }
+            0% { opacity: 0.3; } 50% { opacity: 0.6; } 100% { opacity: 0.3; }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="navbar">
-            <a href="feed.html"><i class="fa-solid fa-arrow-left"></i></a>
+            <button class="nav-btn" onclick="history.back()"><i class="fa-solid fa-arrow-left"></i></button>
+            <h1>Notifications</h1>
+            <button class="nav-btn" id="themeToggle"><i class="fa-solid fa-moon"></i></button>
         </div>
-
-        <h1>Notifications</h1>
 
         <div id="notificationList" class="notification-list">
-            <div class="placeholder-notification"></div>
-            <div class="placeholder-notification" style="width: 90%;"></div>
-            <div class="placeholder-notification" style="width: 95%;"></div>
+            <div class="skeleton"></div>
+            <div class="skeleton" style="width: 95%"></div>
+            <div class="skeleton" style="width: 90%"></div>
         </div>
-        <div id="noNotifications">No new notifications.</div>
+
+        <div id="noNotifications">
+            <i class="fa-regular fa-bell-slash" style="font-size: 3rem; margin-bottom: 1rem; display: block; opacity: 0.5;"></i>
+            <p>No notifications yet</p>
+        </div>
     </div>
 
     <script>
-        // --- Supabase and Global Utility Initialization ---
+        // --- Setup ---
         const SUPABASE_URL = "https://vfbjwkfurleatfdrabdg.supabase.co";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmYmp3a2Z1cmxlYXRmZHJhYmRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MjAwNDIsImV4cCI6MjA3Mjk5NjA0Mn0.hguIfyynGc19tsSm9u66qy5IeUv40_mE8-JBjqnOQBE";
-        // Corrected variable name to supabaseClient to prevent "already declared" error
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         
-        // --- Element Declarations ---
         const notificationList = document.getElementById('notificationList');
         const noNotificationsEl = document.getElementById('noNotifications');
-        
         let currentUser = null;
 
-        // --- Utility Functions ---
-
-        // Helper to format time
-        function timeAgo(dateString) {
-            const now = new Date();
-            const past = new Date(dateString);
-            const seconds = Math.floor((now - past) / 1000);
-
-            let interval = seconds / 31536000;
-            if (interval > 1) return Math.floor(interval) + " years ago";
-            interval = seconds / 2592000;
-            if (interval > 1) return Math.floor(interval) + " months ago";
-            interval = seconds / 86400;
-            if (interval > 1) return Math.floor(interval) + " days ago";
-            interval = seconds / 3600;
-            if (interval > 1) return Math.floor(interval) + " hours ago";
-            interval = seconds / 60;
-            if (interval > 1) return Math.floor(interval) + " minutes ago";
-            return Math.floor(seconds) + " seconds ago";
+        // --- Theme Logic ---
+        const themeToggle = document.getElementById('themeToggle');
+        
+        function initTheme() {
+            const saved = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', saved);
+            updateThemeIcon(saved);
+        }
+        
+        function toggleTheme() {
+            const current = document.documentElement.getAttribute('data-theme');
+            const next = current === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+            updateThemeIcon(next);
         }
 
-        // --- Main Logic: Fetching and Displaying ---
+        function updateThemeIcon(theme) {
+            themeToggle.innerHTML = theme === 'light' 
+                ? '<i class="fa-solid fa-moon"></i>' 
+                : '<i class="fa-solid fa-sun"></i>';
+        }
 
-        async function fetchAndDisplayNotifications() {
-            // Remove placeholders
-            document.querySelectorAll('.placeholder-notification').forEach(el => el.remove());
+        themeToggle.addEventListener('click', toggleTheme);
+        initTheme();
 
-            // Fetch notifications, including related_id
+        // --- Fetch Logic ---
+        async function fetchNotifications() {
+            // Cleanup skeletons
+            document.querySelectorAll('.skeleton').forEach(el => el.remove());
+
             const { data: notifications, error } = await supabaseClient
                 .from('notifications')
                 .select(`id, type, message, read_status, created_at, sender_id, related_id`)
                 .eq('recipient_id', currentUser.id)
                 .order('created_at', { ascending: false });
 
-            if (error) {
-                console.error('Error fetching notifications:', error.message);
-                notificationList.innerHTML = `<p style="color: #ef4444; text-align: center;">Error loading notifications.</p>`;
-                return;
-            }
-
-            notificationList.innerHTML = '';
-            if (notifications.length === 0) {
+            if (error || !notifications || notifications.length === 0) {
+                if(error) console.error(error);
                 noNotificationsEl.style.display = 'block';
                 return;
             }
 
-            // Batch fetch sender profiles
-            const senderIds = [...new Set(notifications.map(n => n.sender_id).filter(id => id))]; // Filter out null sender_id
-            const { data: profiles, error: profileError } = await supabaseClient
+            // Get sender details
+            const senderIds = [...new Set(notifications.map(n => n.sender_id).filter(id => id))];
+            const { data: profiles } = await supabaseClient
                 .from('profiles')
                 .select('user_id, full_name, avatar_url')
                 .in('user_id', senderIds);
             
-            if (profileError) {
-                console.error("Error fetching profiles:", profileError.message);
-                // Proceed without profiles if there's an error
-            }
-
             const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
 
             noNotificationsEl.style.display = 'none';
+            notificationList.innerHTML = '';
 
-            notifications.forEach(notification => {
-                const notificationItem = document.createElement('div');
-                notificationItem.className = `notification-item ${notification.read_status ? '' : 'unread'}`;
+            notifications.forEach(notif => {
+                const sender = profileMap.get(notif.sender_id);
+                const senderName = sender?.full_name || 'System'; // Default to 'System' if no sender (e.g. admin msg)
+                const avatarUrl = sender?.avatar_url;
+
+                // 1. Icon & Message Logic
+                let iconHtml = '';
+                let msgHtml = '';
                 
-                // Set a data attribute to store the entire notification object for easy access
-                notificationItem.dataset.notification = JSON.stringify(notification);
-
-                const senderProfile = profileMap.get(notification.sender_id);
-                const avatar = senderProfile?.avatar_url;
-                const senderName = senderProfile?.full_name || 'A user';
-
-                let avatarHtml = `<div class="notification-avatar-placeholder" title="${senderName}"><i class="fa-solid fa-user"></i></div>`;
-                if (avatar) {
-                    avatarHtml = `<img src="${avatar}" alt="User Avatar" class="notification-avatar">`;
-                }
-
-                let notificationMessage = '';
-                // Determine message based on type
-                switch (notification.type) {
+                switch (notif.type) {
                     case 'post_liked':
-                        notificationMessage = `<strong>${senderName}</strong> liked your post.`;
+                        iconHtml = '<i class="fa-solid fa-heart" style="color: #ef4444"></i>';
+                        msgHtml = `<strong>${senderName}</strong> liked your post.`;
                         break;
                     case 'post_commented':
-                        notificationMessage = `<strong>${senderName}</strong> commented: "${notification.message}"`;
-                        break;
-                    case 'friend_post':
-                        notificationMessage = `<strong>${senderName}</strong> posted something new.`;
+                        iconHtml = '<i class="fa-solid fa-comment" style="color: #3b82f6"></i>';
+                        msgHtml = `<strong>${senderName}</strong> commented: "${notif.message}"`;
                         break;
                     case 'friend_request':
-                        notificationMessage = `<strong>${senderName}</strong> sent you a friend request.`;
+                        iconHtml = '<i class="fa-solid fa-user-plus" style="color: #10b981"></i>';
+                        msgHtml = `<strong>${senderName}</strong> sent you a friend request.`;
                         break;
-                    default:
-                        notificationMessage = notification.message || 'New activity on your account.';
+                    case 'admin_message':
+                        iconHtml = '<i class="fa-solid fa-shield-halved" style="color: #f59e0b"></i>';
+                        msgHtml = `<strong>Admin:</strong> ${notif.message}`;
+                        break;
+                    case 'order_status_update':
+                        iconHtml = '<i class="fa-solid fa-box" style="color: #8b5cf6"></i>';
+                        msgHtml = `Order Update: ${notif.message}`;
+                        break;
+                    case 'market_inquiry':
+                        iconHtml = '<i class="fa-solid fa-store" style="color: #f97316"></i>';
+                        msgHtml = `New market inquiry from <strong>${senderName}</strong>.`;
+                        break;
+                    default: // chat, message, etc
+                        iconHtml = '<i class="fa-solid fa-bell" style="color: #64748b"></i>';
+                        msgHtml = notif.message || "New notification";
                 }
 
+                // 2. Avatar HTML
+                let avatarDisplay = avatarUrl 
+                    ? `<img src="${avatarUrl}" class="notif-img">`
+                    : `<div class="notif-icon-placeholder"><i class="fa-solid fa-user"></i></div>`;
+
+                // Special avatar for Admin/System
+                if (notif.type === 'admin_message' || notif.type === 'order_status_update') {
+                    avatarDisplay = `<div class="notif-icon-placeholder" style="background:#0f172a"><i class="fa-solid fa-robot"></i></div>`;
+                }
+
+                // 3. Friend Request Buttons
                 let actionsHtml = '';
-                if (notification.type === 'friend_request') {
+                if (notif.type === 'friend_request') {
                     actionsHtml = `
-                        <div class="notification-actions" data-notification-id="${notification.id}">
-                            <button class="accept-btn" data-sender-id="${notification.sender_id}">Accept</button>
-                            <button class="reject-btn" data-sender-id="${notification.sender_id}">Reject</button>
+                        <div class="notification-actions">
+                            <button class="action-btn accept-btn" onclick="handleFriendRequest(event, '${notif.sender_id}', '${notif.id}', 'accepted')">Accept</button>
+                            <button class="action-btn reject-btn" onclick="handleFriendRequest(event, '${notif.sender_id}', '${notif.id}', 'rejected')">Reject</button>
                         </div>
                     `;
                 }
 
-                notificationItem.innerHTML = `
-                    ${avatarHtml}
-                    <div class="notification-content">
-                        <p>${notificationMessage}</p>
-                        <small>${timeAgo(notification.created_at)}</small>
+                // 4. Create Element
+                const item = document.createElement('div');
+                item.className = `notification-item ${notif.read_status ? '' : 'unread'}`;
+                item.innerHTML = `
+                    <div class="avatar-wrapper">
+                        ${avatarDisplay}
+                        <div class="type-badge">${iconHtml}</div>
                     </div>
-                    ${actionsHtml}
+                    <div class="notification-content">
+                        <p>${msgHtml}</p>
+                        <small>${timeAgo(notif.created_at)}</small>
+                        ${actionsHtml}
+                    </div>
                 `;
-                
-                notificationList.appendChild(notificationItem);
-            });
 
-            // Add event listeners for all notification items
-            document.querySelectorAll('.notification-item').forEach(item => {
-                const notification = JSON.parse(item.dataset.notification);
-                
-                // Only non-friend-request notifications should redirect
-                if (notification.type !== 'friend_request') {
-                    item.addEventListener('click', () => {
-                        handleNotificationClick(item, notification);
-                    });
-                }
-            });
-
-            // Add event listeners for new buttons
-            document.querySelectorAll('.accept-btn').forEach(button => {
-                button.addEventListener('click', async (event) => {
-                    event.stopPropagation();
-                    const senderId = event.target.dataset.senderId;
-                    const notificationItem = event.target.closest('.notification-item');
-                    const notificationId = JSON.parse(notificationItem.dataset.notification).id;
-                    await handleFriendRequest(senderId, notificationId, 'accepted', notificationItem);
+                // 5. Add Click Listener
+                item.addEventListener('click', (e) => {
+                    if (e.target.closest('button')) return; // Ignore button clicks
+                    handleRedirect(notif, item);
                 });
-            });
 
-            document.querySelectorAll('.reject-btn').forEach(button => {
-                button.addEventListener('click', async (event) => {
-                    event.stopPropagation();
-                    const senderId = event.target.dataset.senderId;
-                    const notificationItem = event.target.closest('.notification-item');
-                    const notificationId = JSON.parse(notificationItem.dataset.notification).id;
-                    await handleFriendRequest(senderId, notificationId, 'rejected', notificationItem);
-                });
+                notificationList.appendChild(item);
             });
         }
 
-        // --- Action Handlers ---
+        // --- Core Redirection Logic ---
+        async function handleRedirect(notif, itemEl) {
+            // Mark read visually
+            itemEl.classList.remove('unread');
+            
+            // Mark read in DB
+            supabaseClient.from('notifications').update({ read_status: true }).eq('id', notif.id).then();
 
-        async function handleFriendRequest(senderId, notificationId, status, notificationElement) {
-            // Find the friend request in the friend_requests table
-            const { data: request, error: fetchError } = await supabaseClient
-                .from('friend_requests')
-                .select('id')
-                .eq('sender_id', senderId)
-                .eq('receiver_id', currentUser.id)
-                .single();
+            const { type, related_id, sender_id } = notif;
 
-            if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 means 'No rows found'
-                console.error('Error fetching friend request:', fetchError.message);
-                return;
+            // --- REDIRECT SWITCH ---
+            if (['post_liked', 'post_commented', 'friend_post', 'mention'].includes(type)) {
+                // Feed
+                window.location.href = `feed.html?post_id=${related_id}`;
+            } 
+            else if (['chat_message', 'message'].includes(type)) {
+                // Chat
+                window.location.href = `chat.html?chat_with=${sender_id}`;
+            } 
+            else if (['market_inquiry', 'market_item', 'order_status_update'].includes(type)) {
+                // Market (This handles your requirement)
+                // If related_id exists (item id), go to item, otherwise just market home
+                if (related_id) {
+                    window.location.href = `market.html?item_id=${related_id}`;
+                } else {
+                    window.location.href = `market.html`;
+                }
+            } 
+            else if (type === 'admin_message') {
+                // Admin Message - Usually no specific ID, just general info. 
+                // Redirect to a safe page like Profile or Index, or stay put.
+                // Here we redirect to index/home.
+                window.location.href = `index.html`; 
+            }
+            else if (type === 'friend_request' || type === 'profile_view') {
+                // Profile
+                window.location.href = `profile.html?user_id=${sender_id}`;
+            }
+            else {
+                console.log("Unknown type:", type);
+            }
+        }
+
+        // --- Helpers ---
+        window.handleFriendRequest = async (e, senderId, notifId, status) => {
+            e.stopPropagation();
+            const btn = e.target;
+            btn.innerText = '...';
+            
+            // Fetch request ID
+            const { data: req } = await supabaseClient.from('friend_requests')
+                .select('id').eq('sender_id', senderId).eq('receiver_id', currentUser.id).single();
+
+            if (req) {
+                if (status === 'accepted') 
+                    await supabaseClient.from('friend_requests').update({ status: 'accepted' }).eq('id', req.id);
+                else 
+                    await supabaseClient.from('friend_requests').delete().eq('id', req.id);
             }
             
-            if (!request) {
-                console.warn('Friend request not found, possibly already processed.');
-            }
+            // Delete notif & remove element
+            await supabaseClient.from('notifications').delete().eq('id', notifId);
+            const item = btn.closest('.notification-item');
+            item.style.opacity = '0';
+            setTimeout(() => item.remove(), 300);
+        };
 
-            if (status === 'accepted') {
-                if (request) {
-                    const { error: updateError } = await supabaseClient
-                        .from('friend_requests')
-                        .update({ status: 'accepted' })
-                        .eq('id', request.id);
-
-                    if (updateError) {
-                        console.error('Error accepting request:', updateError.message);
-                        return;
-                    }
-                }
-            } else if (status === 'rejected') {
-                if (request) {
-                    const { error: deleteError } = await supabaseClient
-                        .from('friend_requests')
-                        .delete()
-                        .eq('id', request.id);
-
-                    if (deleteError) {
-                        console.error('Error rejecting request:', deleteError.message);
-                        return;
-                    }
-                }
-            }
-
-            // Delete the notification record from the database
-            const { error: notificationError } = await supabaseClient
-                .from('notifications')
-                .delete()
-                .eq('id', notificationId);
-
-            if (notificationError) {
-                console.error('Error deleting notification:', notificationError.message);
-            }
-            
-            // Remove the UI element
-            if (notificationElement) {
-                notificationElement.remove();
-            }
-
-            if (notificationList.children.length === 0) {
-                noNotificationsEl.style.display = 'block';
-            }
+        function timeAgo(dateString) {
+            const seconds = Math.floor((new Date() - new Date(dateString)) / 1000);
+            if (seconds < 60) return "Just now";
+            const min = Math.floor(seconds / 60);
+            if (min < 60) return `${min}m ago`;
+            const hr = Math.floor(min / 60);
+            if (hr < 24) return `${hr}h ago`;
+            return `${Math.floor(hr / 24)}d ago`;
         }
 
-        async function handleNotificationClick(itemElement, notification) {
-            // Check if the notification has a related_id (like/comment/post)
-            if (notification.related_id) {
-                // Mark the notification as read in the DB
-                await markNotificationAsRead(notification.id);
-                
-                // Update UI instantly
-                itemElement.classList.remove('unread');
-                
-                // Redirect the user to the feed page, with the post ID in the URL for scrolling
-                window.location.href = `feed.html?post_id=${notification.related_id}`;
-            }
-        }
-
-        async function markNotificationAsRead(notificationId) {
-            const { error } = await supabaseClient
-                .from('notifications')
-                .update({ read_status: true })
-                .eq('id', notificationId);
-
-            if (error) {
-                console.error("Error marking notification as read:", error.message);
-            }
-        }
-
-        // --- Initialization ---
-
+        // --- Init ---
         document.addEventListener('DOMContentLoaded', async () => {
-            // FIX: Use getSession() to reliably retrieve the session state immediately on page load.
             const { data: { session } } = await supabaseClient.auth.getSession();
-            
             if (session) {
-                // If the session exists, set the user and proceed.
                 currentUser = session.user;
-                
-                // Mark ALL unread notifications as read on page load via a single query
-                await supabaseClient
-                    .from('notifications')
-                    .update({ read_status: true })
-                    .eq('recipient_id', currentUser.id)
-                    .eq('read_status', false);
-
-                fetchAndDisplayNotifications();
+                fetchNotifications();
             } else {
-                // If no valid session, redirect.
                 window.location.href = 'index.html';
-                return;
             }
         });
     </script>
