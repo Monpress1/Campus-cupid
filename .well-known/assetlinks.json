@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "app.vercel.campus_cupid_psi.twa",
+        "sha256_cert_fingerprints": ["34:71:72:FF:B2:43:22:DB:E3:98:17:91:83:FC:33:26:78:DA:C5:5F:FE:8A:56:7D:70:58:A4:BE:33:BE:0B:8A"]
+      }
+    }]
