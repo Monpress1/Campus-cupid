@@ -525,16 +525,62 @@ button#cancelBtn:hover { background: #334155; }
 <button id="floatingChatBtn"><i class="fa-solid fa-comments"></i></button>
 <br>
 <div class="contact-card">
-    Contact us <br>
+    Contact Campus Cupid<br>
     <br>
-    <div class="arr">
-        <a href="https://whatsapp.com/channel/0029VbB9CN5ICVfpcjNHGq0V" target="_blank" class="whatsapp-icon">
-            <i class="fa fa-whatsapp" style="font-size:40px; color:#373; text-shadow:2px 3px 2px black; margin-left:81px;"></i> 
-        </a>
-        <a href="https://www.instagram.com/ruysteve/?utm_source=ig_web_button_share_sheet" target="_blank" class="instagram-icon">
-            <i class="fa fa-instagram insta-gradient-icon" style="font-size:40px; margin-left:50px;"></i>
-        </a>
-    </div>
+   <style>
+  .social-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 25px; /* Perfect spacing without manual margins */
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.03); /* Subtle backdrop */
+    border-radius: 50px;
+    width: max-content;
+    margin: 20px auto;
+  }
+
+  .social-link {
+    font-size: 32px;
+    color: #94a3b8; /* Professional muted grey */
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Hover Effects */
+  .social-link:hover {
+    transform: translateY(-5px); /* Gentle float up */
+  }
+
+  .whatsapp:hover { color: #25D366; filter: drop-shadow(0 0 8px rgba(37, 211, 102, 0.4)); }
+  .instagram:hover { color: #E4405F; filter: drop-shadow(0 0 8px rgba(228, 64, 95, 0.4)); }
+  .facebook:hover { color: #1877F2; filter: drop-shadow(0 0 8px rgba(24, 119, 242, 0.4)); }
+
+  /* Specific fix for Instagram Gradient if you prefer that over solid color */
+  .insta-gradient:hover {
+    background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+</style>
+
+<div class="social-container">
+    <a href="https://whatsapp.com/channel/0029VbB9CN5ICVfpcjNHGq0V" target="_blank" class="social-link whatsapp">
+        <i class="fa-brands fa-whatsapp"></i>
+    </a>
+
+    <a href="https://www.instagram.com/ruysteve/?utm_source=ig_web_button_share_sheet" target="_blank" class="social-link instagram insta-gradient">
+        <i class="fa-brands fa-instagram"></i>
+    </a>
+
+    <a href="https://www.facebook.com/profile.php?id=61586225044593" target="_blank" class="social-link facebook">
+        <i class="fa-brands fa-facebook"></i>
+    </a>
+</div>
+
 </div>
 <script>
 const SUPABASE_URL = "https://vfbjwkfurleatfdrabdg.supabase.co";
@@ -1254,3 +1300,4 @@ loadProfile();
 </script>
 </body>
 </html>
+
