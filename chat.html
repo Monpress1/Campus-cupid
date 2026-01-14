@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -367,7 +368,7 @@ body {
         </div>
     </div>
     <div class="friends-list" id="friendsList">
-      <p style="text-align:center;color:#94a3b8;">Loading friends...</p>
+      <p style="text-align:center;color:#94a3b8;"></p>
     </div>
   </div>
 
@@ -646,12 +647,30 @@ async function loadFriends(){
         }
     }
     
-    friendsList.innerHTML = "";
-    profiles.sort((a, b) => {
-        const nameA = a.full_name || '';
-        const nameB = b.full_name || '';
-        return nameA.localeCompare(nameB);
+        // --- START OF NEW SORTING LOGIC ---
+    // 1. Create a map of friendId -> latest message timestamp
+    const latestMessageMap = {};
+    messages.forEach(msg => {
+        const otherId = msg.sender_id === currentUserId ? msg.receiver_id : msg.sender_id;
+        // Since messages are fetched DESC, the first one found is the newest
+        if (!latestMessageMap[otherId]) {
+            latestMessageMap[otherId] = new Date(msg.created_at).getTime();
+        }
     });
+
+    // 2. Sort profiles based on timestamp (newest conversation first)
+    profiles.sort((a, b) => {
+        const timeA = latestMessageMap[a.user_id] || 0; 
+        const timeB = latestMessageMap[b.user_id] || 0;
+        
+        // If timestamps are different, sort by newest time
+        if (timeB !== timeA) {
+            return timeB - timeA;
+        }
+        // Fallback to alphabetical if no messages exist
+        return (a.full_name || '').localeCompare(b.full_name || '');
+    });
+    // --- END OF NEW SORTING LOGIC ---
 
     profiles.forEach(p => {
         let lastMessage = lastMessages[p.user_id] || "No messages yet.";
@@ -807,11 +826,14 @@ async function pollForNewFriendsAndMessages() {
       }
   });
 
-  const existingFriendIds = Array.from(document.querySelectorAll('.friend-item')).map(el => el.dataset.userId);
-  if (friendIds.length !== existingFriendIds.length) {
+    const existingFriendIds = Array.from(document.querySelectorAll('.friend-item')).map(el => el.dataset.userId);
+  
+  // Change the 'if' condition to also check if messages exist
+  if (friendIds.length !== existingFriendIds.length || messages.length > 0) {
       loadFriends();
   }
 }
+
 
 function startFriendsListPolling() {
   if (friendsListPollingInterval) {
